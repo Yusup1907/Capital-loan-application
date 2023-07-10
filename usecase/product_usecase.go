@@ -9,6 +9,7 @@ import (
 
 type ProductUsecase interface {
 	CreateProduct(product *model.ProductModel) error
+	GetAllProduct() ([]*model.ProductModel, error)
 }
 
 type productUsecase struct {
@@ -28,6 +29,10 @@ func (p *productUsecase) CreateProduct(product *model.ProductModel) error {
 		}
 	}
 	return p.repo.CreateProduct(product)
+}
+
+func (p *productUsecase) GetAllProduct() ([]*model.ProductModel, error) {
+	return p.repo.GetAllProduct()
 }
 
 func NewProductUseCase(repo repository.ProductRepo) ProductUsecase {

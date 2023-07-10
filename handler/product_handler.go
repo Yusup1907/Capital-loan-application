@@ -59,12 +59,29 @@ func (ph *ProductHandler) createProduct(ctx *gin.Context) {
 	})
 }
 
+func (ph *ProductHandler) getAllProduct(ctx *gin.Context) {
+	product, err := ph.usecase.GetAllProduct()
+	if err != nil {
+		fmt.Printf("ProductHandler.GetAllProduct() : %v ", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": "An error occurred when retrieving product data",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    product,
+	})
+}
+
 func NewProductHandler(r *gin.Engine, usecase usecase.ProductUsecase) *ProductHandler {
 	handler := ProductHandler{
 		router:  r,
 		usecase: usecase,
 	}
-	// r.GET("/customer", handler.getAllCustomer)
+	r.GET("/product", handler.getAllProduct)
 	// r.GET("/customer/:id", handler.getCustomerById)
 	r.POST("/product", handler.createProduct)
 	return &handler
