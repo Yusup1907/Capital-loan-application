@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"fmt"
+	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/repository"
 )
@@ -15,6 +17,17 @@ type categoryProductUsecaseImpl struct {
 }
 
 func (cpUsecase *categoryProductUsecaseImpl) InsertCategoryProduct(cp *model.CategoryProductModel) error{
+	cpDB, err := cpUsecase.cpRepo.GetCategoryProductByName(cp.CategoryProductName)
+	if err != nil {
+		return fmt.Errorf("serviceUsecaseImpl.InsertService() : %w", err)
+	}
+
+	if cpDB != nil {
+		return apperror.AppError{
+			ErrorCode:    1,
+			ErrorMassage: fmt.Sprintf("data category product dengan nama %v sudah ada", cp.CategoryProductName),
+		}
+	}
 	return cpUsecase.cpRepo.InsertCategoryProduct(cp)
 }
 

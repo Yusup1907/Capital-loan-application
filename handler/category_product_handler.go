@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
 	"strconv"
@@ -32,18 +34,27 @@ func (cpHandler *categoryProductHandler) InsertCategoryProduct(ctx *gin.Context)
 	if cp.CategoryProductName == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"errorMessage": "Nama Tidak Boleh Kosong",
+			"errorMessage": "Category Product Name Tidak Boleh Kosong",
 		})
 		return
 	}
 
 	err = cpHandler.cpUsecase.InsertCategoryProduct(cp)
 	if err != nil{
+		appError := apperror.AppError{}
+		if errors.As(err, &appError) {
+			fmt.Printf("ServiceHandler.InsertService() 1 : %v ", err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": appError.Error(),
+			})
+		}else {
 		fmt.Printf("error an cpHandler.cpUsecase.InsertCategoryProduct : %v ", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success":      false,
 			"errorMessage": "Terjadi kesalahan ketika menyimpan data category product",
 		})
+		}
 		return
 	}
 

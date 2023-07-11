@@ -10,6 +10,7 @@ import (
 type CategoryProductRepo interface {
 	InsertCategoryProduct(*model.CategoryProductModel) error
 	GetCategoryProductById(int) (*model.CategoryProductModel, error)
+	GetCategoryProductByName(string) (*model.CategoryProductModel, error)
 }
 
 type categoryProductRepoImpl struct {
@@ -41,6 +42,19 @@ func (cpRepo *categoryProductRepoImpl) GetCategoryProductById(id int) (*model.Ca
 	return cp, nil
 }
 
+func (cpRepo *categoryProductRepoImpl) GetCategoryProductByName(name string) (*model.CategoryProductModel, error) {
+	qry := "SELECT id, category_product_name, created_at, updated_at FROM category_product WHERE category_product_name = $1"
+
+	cp := &model.CategoryProductModel{}
+	err := cpRepo.db.QueryRow(qry, name).Scan(&cp.Id, &cp.CategoryProductName, &cp.CreateAt, &cp.UpdateAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error on categoryProductRepoImpl.categoryProductRepoImpl : %w", err)
+	}
+	return cp, nil
+}
 
 func NewCategoryProductRepo(db *sql.DB) CategoryProductRepo {
 	return &categoryProductRepoImpl{
