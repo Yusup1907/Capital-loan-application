@@ -124,18 +124,31 @@ func (ch *CategoryLoanHandler) GetCategoryLoanByName(ctx *gin.Context) {
 }
 
 func (ch *CategoryLoanHandler) UpdateCategoryLoan(ctx *gin.Context) {
-
 	cl := &model.CategoryLoanModel{}
 	if err := ctx.ShouldBindJSON(&cl); err != nil {
-
 		errResponse := apperror.NewAppError(http.StatusBadRequest, err.Error())
 		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
-	err := ch.usecase.UpdateCategoryLoan(cl.Id, cl)
+	// Cek apakah kategori pinjaman dengan ID yang diberikan ada dalam database
+	existingCategoryLoan, err := ch.usecase.GetCategoryLoanById(cl.Id)
 	if err != nil {
-		fmt.Printf("error an cpHandler.cpUsecase.UpdateCategoryProduct : %v ", err)
+		log.Printf("CategoryLoanHandler.UpdateCategoryLoan(): %v", err.Error())
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to update category loan")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
+		return
+	}
+
+	if existingCategoryLoan == nil {
+		errResponse := apperror.NewAppError(http.StatusBadRequest, "Category loan not found")
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	err = ch.usecase.UpdateCategoryLoan(cl.Id, cl)
+	if err != nil {
+		log.Printf("CategoryLoanHandler.UpdateCategoryLoan(): %v", err.Error())
 		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to update category loan")
 		ctx.JSON(http.StatusInternalServerError, errResponse)
 		return
@@ -146,6 +159,7 @@ func (ch *CategoryLoanHandler) UpdateCategoryLoan(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, successResponse)
 }
+
 func (ch *CategoryLoanHandler) DeleteCategoryLoan(ctx *gin.Context) {
 	idText := ctx.Param("id")
 	if idText == "" {

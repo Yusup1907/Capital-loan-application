@@ -52,15 +52,18 @@ func (uc *CategoryLoanUsecaseImpl) InsertCategoryLoan(ctr *model.CategoryLoanMod
 }
 
 func (uc *CategoryLoanUsecaseImpl) UpdateCategoryLoan(id int, ctr *model.CategoryLoanModel) error {
-	categoryLoanByName, err := uc.ctrRepo.GetCategoryLoanByName(ctr.CategoryLoanName)
+	// Periksa keberadaan kategori pinjaman dengan nama yang sama
+	existingCategoryLoan, err := uc.ctrRepo.GetCategoryLoanById(id)
 	if err != nil {
-		return fmt.Errorf("CategoryLoanUsecaseImpl.InsertCategoryLoan(): %w", err)
+		return fmt.Errorf("CategoryLoanUsecaseImpl.UpdateCategoryLoan(): %w", err)
 	}
 
-	if categoryLoanByName != nil {
+	// Jika ditemukan kategori lain dengan nama yang sama, kembalikan kesalahan
+	if existingCategoryLoan != nil && existingCategoryLoan.Id != ctr.Id {
 		return apperror.NewAppError(1, fmt.Sprintf("Data CategoryLoan with name %v already exists", ctr.CategoryLoanName))
 	}
 
+	// Update kategori pinjaman
 	return uc.ctrRepo.UpdateCategoryLoan(ctr.Id, ctr)
 }
 

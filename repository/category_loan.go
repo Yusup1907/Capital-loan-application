@@ -93,7 +93,7 @@ func (repo *CategoryLoanRepoImpl) UpdateCategoryLoan(id int, ctr *model.Category
 
 	qry := utils.UPDATE_CATEGORY_LOAN
 
-	_, err = repo.db.Exec(qry, ctr.CategoryLoanName, ctr.UpdatedAt, ctr.Id)
+	_, err = repo.db.Exec(qry, ctr.CategoryLoanName, ctr.UpdatedAt, &ctr.CreatedAt, ctr.Id)
 	if err != nil {
 		return fmt.Errorf("error on CategoryLoanRepoImpl.UpdateCategoryLoan(): %w", err)
 	}
