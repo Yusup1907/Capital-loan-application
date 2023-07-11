@@ -139,6 +139,35 @@ func (ph *ProductHandler) updateProduct(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, successResponse)
 }
 
+func (ph *ProductHandler) deleteProduct(ctx *gin.Context) {
+	idText := ctx.Param("id")
+	if idText == "" {
+		err := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	id, err := strconv.Atoi(idText)
+	if err != nil {
+		err := apperror.NewAppError(http.StatusBadRequest, "ID must be a number")
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	err = ph.usecase.DeleteProduct(id)
+	if err != nil {
+		log.Printf("ProductHandler.deleteProduct(): %v", err.Error())
+		err := apperror.NewAppError(http.StatusInternalServerError, "Failed to delete product")
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	successResponse := gin.H{
+		"success": true,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+
 func NewProductHandler(r *gin.Engine, usecase usecase.ProductUsecase) *ProductHandler {
 	handler := ProductHandler{
 		router:  r,
@@ -148,5 +177,6 @@ func NewProductHandler(r *gin.Engine, usecase usecase.ProductUsecase) *ProductHa
 	r.GET("/product", handler.getAllProduct)
 	r.GET("/product/:id", handler.getProductById)
 	r.PUT("/product/:id", handler.updateProduct)
+	r.DELETE("/product/:id", handler.deleteProduct)
 	return &handler
 }

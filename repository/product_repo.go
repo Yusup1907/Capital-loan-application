@@ -12,6 +12,7 @@ type ProductRepo interface {
 	GetProductById(id int) (*model.ProductModel, error)
 	GetProductByName(nameProduct string) (*model.ProductModel, error)
 	UpdateProduct(id int, updateProduct *model.ProductModel) error
+	DeleteProduct(id int) error
 }
 
 type productRepo struct {
@@ -90,6 +91,17 @@ func (p *productRepo) UpdateProduct(id int, updateProduct *model.ProductModel) e
 	if err != nil {
 		return fmt.Errorf("error on productRepo.UpdateProduct() : %w", err)
 	}
+	return nil
+}
+
+func (p *productRepo) DeleteProduct(id int) error {
+	deleteStatment := "DELETE FROM mst_product WHERE id = $1;"
+
+	_, err := p.db.Exec(deleteStatment, id)
+	if err != nil {
+		return fmt.Errorf("DeleteProduct() : %w", err)
+	}
+
 	return nil
 }
 

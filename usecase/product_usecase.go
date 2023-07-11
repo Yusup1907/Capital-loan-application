@@ -13,6 +13,7 @@ type ProductUsecase interface {
 	GetAllProduct() ([]*model.ProductModel, error)
 	GetProductById(id int) (*model.ProductModel, error)
 	UpdateProduct(id int, updateProduct *model.ProductModel) error
+	DeleteProduct(id int) error
 }
 
 type productUsecase struct {
@@ -89,6 +90,22 @@ func (p *productUsecase) UpdateProduct(id int, updateProduct *model.ProductModel
 	existingProduct.Status = updateProduct.Status
 
 	return p.repo.UpdateProduct(id, existingProduct)
+}
+
+func (p *productUsecase) DeleteProduct(id int) error {
+	existingProduct, err := p.repo.GetProductById(id)
+	if err != nil {
+		return fmt.Errorf("productUsecase.DeleteProduct(): %w", err)
+	}
+
+	if existingProduct == nil {
+		return apperror.AppError{
+			ErrorCode:    2,
+			ErrorMassage: fmt.Sprintf("Data product dengan id %v tidak ada", id),
+		}
+	}
+
+	return p.repo.DeleteProduct(id)
 }
 
 func NewProductUseCase(repo repository.ProductRepo) ProductUsecase {
