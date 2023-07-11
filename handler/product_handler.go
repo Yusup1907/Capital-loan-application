@@ -7,6 +7,7 @@ import (
 	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -39,7 +40,7 @@ func (ph *ProductHandler) createProduct(ctx *gin.Context) {
 	if err != nil {
 		appError := apperror.AppError{}
 		if errors.As(err, &appError) {
-			fmt.Printf("ProductHandler.CreateProduct() 1 : %v ", err.Error())
+			fmt.Printf("ProductHandler.createProduct() 1 : %v ", err.Error())
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"success":      false,
 				"errorMessage": appError.Error(),
@@ -62,7 +63,41 @@ func (ph *ProductHandler) createProduct(ctx *gin.Context) {
 func (ph *ProductHandler) getAllProduct(ctx *gin.Context) {
 	product, err := ph.usecase.GetAllProduct()
 	if err != nil {
-		fmt.Printf("ProductHandler.GetAllProduct() : %v ", err.Error())
+		fmt.Printf("ProductHandler.getAllProduct() : %v ", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": "An error occurred when retrieving product data",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    product,
+	})
+}
+
+func (ph *ProductHandler) getProductById(ctx *gin.Context) {
+	idText := ctx.Param("id")
+	if idText == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "Id tidak boleh kosong",
+		})
+		return
+	}
+
+	id, err := strconv.Atoi(idText)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "Id harus angka",
+		})
+		return
+	}
+	product, err := ph.usecase.GetProductById(id)
+	if err != nil {
+		fmt.Printf("ProductHandler.getProductById() : %v ", err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success":      false,
 			"errorMessage": "An error occurred when retrieving product data",
@@ -81,8 +116,8 @@ func NewProductHandler(r *gin.Engine, usecase usecase.ProductUsecase) *ProductHa
 		router:  r,
 		usecase: usecase,
 	}
-	r.GET("/product", handler.getAllProduct)
-	// r.GET("/customer/:id", handler.getCustomerById)
 	r.POST("/product", handler.createProduct)
+	r.GET("/product", handler.getAllProduct)
+	r.GET("/product/:id", handler.getProductById)
 	return &handler
 }

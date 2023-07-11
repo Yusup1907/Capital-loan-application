@@ -8,8 +8,9 @@ import (
 
 type ProductRepo interface {
 	CreateProduct(newProduct *model.ProductModel) error
-	GetProductByName(nameProduct string) (*model.ProductModel, error)
 	GetAllProduct() ([]*model.ProductModel, error)
+	GetProductById(id int) (*model.ProductModel, error)
+	GetProductByName(nameProduct string) (*model.ProductModel, error)
 }
 
 type productRepo struct {
@@ -48,6 +49,23 @@ func (p *productRepo) GetAllProduct() ([]*model.ProductModel, error) {
 	return products, nil
 }
 
+func (p *productRepo) GetProductById(id int) (*model.ProductModel, error) {
+	selectStatement := "SELECT id, product_name, description, price, stok, category_product_id, status, created_at, updated_at FROM mst_product WHERE id = $1"
+
+	row := p.db.QueryRow(selectStatement, id)
+
+	product := &model.ProductModel{}
+	err := row.Scan(&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.Status, &product.CreatedAt, &product.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("GetProductById() : %w", err)
+	}
+
+	return product, nil
+}
+
 func (p *productRepo) GetProductByName(nameProduct string) (*model.ProductModel, error) {
 	selectStatement := "SELECT id, product_name, description, price, stok, category_product_id, status, created_at, updated_at FROM mst_product WHERE product_name = $1"
 
@@ -64,8 +82,6 @@ func (p *productRepo) GetProductByName(nameProduct string) (*model.ProductModel,
 
 	return product, nil
 }
-
-
 
 func NewProductRepo(db *sql.DB) ProductRepo {
 	return &productRepo{
