@@ -11,6 +11,7 @@ type ProductRepo interface {
 	GetAllProduct() ([]*model.ProductModel, error)
 	GetProductById(id int) (*model.ProductModel, error)
 	GetProductByName(nameProduct string) (*model.ProductModel, error)
+	UpdateProduct(id int, updateProduct *model.ProductModel) error
 }
 
 type productRepo struct {
@@ -81,6 +82,15 @@ func (p *productRepo) GetProductByName(nameProduct string) (*model.ProductModel,
 	}
 
 	return product, nil
+}
+
+func (p *productRepo) UpdateProduct(id int, updateProduct *model.ProductModel) error {
+	updateStatment := "UPDATE mst_product SET product_name = $1, description = $2, price = $3, stok = $4,  category_product_id = $5, status = $6, updated_at = $7 WHERE id = $8"
+	_, err := p.db.Exec(updateStatment, updateProduct.ProductName, updateProduct.Description, updateProduct.Price, updateProduct.Stok, updateProduct.CategoryProductId, updateProduct.Status, updateProduct.UpdatedAt, id)
+	if err != nil {
+		return fmt.Errorf("error on productRepo.UpdateProduct() : %w", err)
+	}
+	return nil
 }
 
 func NewProductRepo(db *sql.DB) ProductRepo {

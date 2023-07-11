@@ -1,8 +1,7 @@
 package handler
 
 import (
-	"errors"
-	"fmt"
+	"log"
 	"net/http"
 	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
@@ -21,7 +20,8 @@ type ProductHandler struct {
 func (ph *ProductHandler) createProduct(ctx *gin.Context) {
 	var req model.CreateProductRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		errResponse := apperror.NewAppError(http.StatusBadRequest, err.Error())
+		ctx.JSON(http.StatusBadRequest, errResponse)
 		return
 	}
 
@@ -38,77 +38,105 @@ func (ph *ProductHandler) createProduct(ctx *gin.Context) {
 
 	err := ph.usecase.CreateProduct(&product)
 	if err != nil {
-		appError := apperror.AppError{}
-		if errors.As(err, &appError) {
-			fmt.Printf("ProductHandler.createProduct() 1 : %v ", err.Error())
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"success":      false,
-				"errorMessage": appError.Error(),
-			})
-		} else {
-			fmt.Printf("ProductHandler.CreateProduct() 2 : %v ", err.Error())
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"success":      false,
-				"errorMessage": "Cannot Insert product because error",
-			})
-		}
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Cannot insert product due to an error")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	successResponse := gin.H{
 		"success": true,
-	})
+	}
+	ctx.JSON(http.StatusOK, successResponse)
 }
 
 func (ph *ProductHandler) getAllProduct(ctx *gin.Context) {
-	product, err := ph.usecase.GetAllProduct()
+	products, err := ph.usecase.GetAllProduct()
 	if err != nil {
-		fmt.Printf("ProductHandler.getAllProduct() : %v ", err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success":      false,
-			"errorMessage": "An error occurred when retrieving product data",
-		})
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to retrieve product data")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	successResponse := gin.H{
 		"success": true,
-		"data":    product,
-	})
+		"data":    products,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
 }
 
 func (ph *ProductHandler) getProductById(ctx *gin.Context) {
 	idText := ctx.Param("id")
 	if idText == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Id tidak boleh kosong",
-		})
+		err := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
+		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
 
 	id, err := strconv.Atoi(idText)
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Id harus angka",
-		})
-		return
-	}
-	product, err := ph.usecase.GetProductById(id)
-	if err != nil {
-		fmt.Printf("ProductHandler.getProductById() : %v ", err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success":      false,
-			"errorMessage": "An error occurred when retrieving product data",
-		})
+		err := apperror.NewAppError(http.StatusBadRequest, "ID must be a number")
+		ctx.JSON(http.StatusBadRequest, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
+	product, err := ph.usecase.GetProductById(id)
+	if err != nil {
+		log.Printf("ProductHandler.getProductById(): %v", err.Error())
+		err := apperror.NewAppError(http.StatusInternalServerError, "Failed to retrieve product data")
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	successResponse := gin.H{
 		"success": true,
 		"data":    product,
-	})
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+
+func (ph *ProductHandler) updateProduct(ctx *gin.Context) {
+	idText := ctx.Param("id")
+	if idText == "" {
+		errResponse := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	id, err := strconv.Atoi(idText)
+	if err != nil {
+		errResponse := apperror.NewAppError(http.StatusBadRequest, "ID must be a number")
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	var req model.CreateProductRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		errResponse := apperror.NewAppError(http.StatusBadRequest, err.Error())
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	product := model.ProductModel{
+		ProductName:       req.ProductName,
+		Description:       req.Description,
+		Price:             req.Price,
+		Stok:              req.Stok,
+		CategoryProductId: req.CategoryProductId,
+		Status:            req.Status,
+		UpdatedAt:         time.Now(),
+	}
+
+	err = ph.usecase.UpdateProduct(id, &product)
+	if err != nil {
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to update product")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
+		return
+	}
+
+	successResponse := gin.H{
+		"success": true,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
 }
 
 func NewProductHandler(r *gin.Engine, usecase usecase.ProductUsecase) *ProductHandler {
@@ -119,5 +147,6 @@ func NewProductHandler(r *gin.Engine, usecase usecase.ProductUsecase) *ProductHa
 	r.POST("/product", handler.createProduct)
 	r.GET("/product", handler.getAllProduct)
 	r.GET("/product/:id", handler.getProductById)
+	r.PUT("/product/:id", handler.updateProduct)
 	return &handler
 }
