@@ -3,10 +3,12 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -54,6 +56,139 @@ func (ch *CategoryLoanHandler) InsertCategoryLoan(ctx *gin.Context) {
 	})
 }
 
+func (ch *CategoryLoanHandler) GetAllCategoryLoan(ctx *gin.Context) {
+	categoryLoans, err := ch.usecase.GetAllCategoryLoan()
+	if err != nil {
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to retrieve category loan data")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
+		return
+	}
+
+	successResponse := gin.H{
+		"success": true,
+		"data":    categoryLoans,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+func (ch *CategoryLoanHandler) GetCategoryLoanById(ctx *gin.Context) {
+	idText := ctx.Param("id")
+	if idText == "" {
+		err := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	id, err := strconv.Atoi(idText)
+	if err != nil {
+		err := apperror.NewAppError(http.StatusBadRequest, "ID must be a number")
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	CategoryLoans, err := ch.usecase.GetCategoryLoanById(id)
+	if err != nil {
+		log.Printf("CategoryLoanHandler.getCategoryLoanById(): %v", err.Error())
+		err := apperror.NewAppError(http.StatusInternalServerError, "Failed to retrieve CategoryLoan data")
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	successResponse := gin.H{
+		"success": true,
+		"data":    CategoryLoans,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+
+func (ch *CategoryLoanHandler) GetCategoryLoanByName(ctx *gin.Context) {
+	name := ctx.Param("name")
+	if name == "" {
+		err := apperror.NewAppError(http.StatusBadRequest, "Name cannot be empty")
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	categoryLoans, err := ch.usecase.GetCategoryLoanByName(name)
+	if err != nil {
+		log.Printf("CategoryLoanHandler.GetCategoryLoanByName(): %v", err.Error())
+		err := apperror.NewAppError(http.StatusInternalServerError, "Failed to retrieve CategoryLoan data")
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	successResponse := gin.H{
+		"success": true,
+		"data":    categoryLoans,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+
+func (ch *CategoryLoanHandler) UpdateCategoryLoan(ctx *gin.Context) {
+
+	cl := &model.CategoryLoanModel{}
+	if err := ctx.ShouldBindJSON(&cl); err != nil {
+
+		errResponse := apperror.NewAppError(http.StatusBadRequest, err.Error())
+		ctx.JSON(http.StatusBadRequest, errResponse)
+		return
+	}
+
+	err := ch.usecase.UpdateCategoryLoan(cl.Id, cl)
+	if err != nil {
+		fmt.Printf("error an cpHandler.cpUsecase.UpdateCategoryProduct : %v ", err)
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to update category loan")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
+		return
+	}
+
+	successResponse := gin.H{
+		"success": true,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+func (ch *CategoryLoanHandler) DeleteCategoryLoan(ctx *gin.Context) {
+	idText := ctx.Param("id")
+	if idText == "" {
+		err := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	id, err := strconv.Atoi(idText)
+	if err != nil {
+		err := apperror.NewAppError(http.StatusBadRequest, "ID must be a number")
+		ctx.JSON(http.StatusBadRequest, err)
+		return
+	}
+
+	categoryLoan, err := ch.usecase.GetCategoryLoanById(id)
+	if err != nil {
+		log.Printf("CategoryLoanHandler.DeleteCategoryLoan(): %v", err.Error())
+		err := apperror.NewAppError(http.StatusInternalServerError, "Failed to delete CategoryLoan")
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	if categoryLoan == nil {
+		err := apperror.NewAppError(http.StatusNotFound, "CategoryLoan not found")
+		ctx.JSON(http.StatusNotFound, err)
+		return
+	}
+
+	err = ch.usecase.DeleteCategoryLoan(categoryLoan)
+	if err != nil {
+		log.Printf("CategoryLoanHandler.DeleteCategoryLoan(): %v", err.Error())
+		err := apperror.NewAppError(http.StatusInternalServerError, "Failed to delete CategoryLoan")
+		ctx.JSON(http.StatusInternalServerError, err)
+		return
+	}
+
+	successResponse := gin.H{
+		"success": true,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+
 func NewCategoryLoanHandler(r *gin.Engine, usecase usecase.CategoryLoanUsecase) *CategoryLoanHandler {
 	handler := CategoryLoanHandler{
 		router:  r,
@@ -61,5 +196,10 @@ func NewCategoryLoanHandler(r *gin.Engine, usecase usecase.CategoryLoanUsecase) 
 	}
 
 	r.POST("/category-loan", handler.InsertCategoryLoan)
+	r.GET("/category-loan", handler.GetAllCategoryLoan)
+	r.GET("/category-loan/:name", handler.GetCategoryLoanByName)
+	r.GET("/category-loan/id/:id", handler.GetCategoryLoanById)
+	r.PUT("/category-loan", handler.UpdateCategoryLoan)
+	r.DELETE("/category-loan/:id", handler.DeleteCategoryLoan)
 	return &handler
 }
