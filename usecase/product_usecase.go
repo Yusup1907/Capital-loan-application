@@ -49,7 +49,7 @@ func (p *productUsecase) GetProductById(id int) (*model.ProductModel, error) {
 }
 
 func (p *productUsecase) UpdateProduct(id int, updateProduct *model.ProductModel) error {
-	// Validasi input data
+
 	if err := updateProduct.ValidateUpdate(); err != nil {
 		return apperror.NewAppError(http.StatusBadRequest, err.Error())
 	}
@@ -66,9 +66,8 @@ func (p *productUsecase) UpdateProduct(id int, updateProduct *model.ProductModel
 		}
 	}
 
-	// Cek apakah ada perubahan pada nama produk
 	if updateProduct.ProductName != existingProduct.ProductName {
-		// Validasi duplikasi nama produk
+
 		duplicateProduct, err := p.repo.GetProductByName(updateProduct.ProductName)
 		if err != nil {
 			return fmt.Errorf("productUsecase.UpdateProduct(): %w", err)
@@ -82,7 +81,6 @@ func (p *productUsecase) UpdateProduct(id int, updateProduct *model.ProductModel
 		}
 	}
 
-	// Update data produk
 	existingProduct.Description = updateProduct.Description
 	existingProduct.Price = updateProduct.Price
 	existingProduct.Stok = updateProduct.Stok
