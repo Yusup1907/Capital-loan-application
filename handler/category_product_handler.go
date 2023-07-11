@@ -114,6 +114,49 @@ func (cpHandler *categoryProductHandler) GetAllCategoryProduct(ctx *gin.Context)
 	})
 }
 
+func(cpHandler *categoryProductHandler) UpdateCategoryProduct(ctx *gin.Context){
+	cp := &model.CategoryProductModel{}
+	err := ctx.ShouldBindJSON(&cp)
+	if err != nil{
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"errorMessage": "Invalid Data JSON",
+		})
+		return
+	}
+
+	if cp.CategoryProductName == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"errorMessage": "Category Product Name Tidak Boleh Kosong",
+		})
+		return
+	}
+
+	err = cpHandler.cpUsecase.UpdateCategoryProduct(cp.Id, cp)
+	if err != nil{
+		appError := apperror.AppError{}
+		if errors.As(err, &appError) {
+			fmt.Printf(" categoryProductHandler. UpdateCategoryProduct : %v ", err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": appError.Error(),
+			})
+		}else {
+		fmt.Printf("error an cpHandler.cpUsecase.UpdateCategoryProduct : %v ", err)
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": "Terjadi kesalahan ketika menyimpan data category product",
+		})
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+	})
+}
+
 func NewCategoryProductHandler(srv *gin.Engine, cpUsecase usecase.CategoryProductUsecase) CategoryProductHandler {
 	handler := &categoryProductHandler{
 		cpUsecase: cpUsecase,
@@ -122,5 +165,6 @@ func NewCategoryProductHandler(srv *gin.Engine, cpUsecase usecase.CategoryProduc
 	srv.POST("/category_product", handler.InsertCategoryProduct)
 	srv.GET("/category_product/:id", handler.GetCategoryProductById)
 	srv.GET("/category_product", handler.GetAllCategoryProduct)
+	srv.PUT("/category_product", handler.UpdateCategoryProduct)
 	return handler
 }

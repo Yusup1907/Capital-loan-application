@@ -12,6 +12,7 @@ type CategoryProductRepo interface {
 	GetCategoryProductById(int) (*model.CategoryProductModel, error)
 	GetCategoryProductByName(string) (*model.CategoryProductModel, error)
 	GetAllCategoryProduct() ([]model.CategoryProductModel, error)
+	UpdateCategoryProduct(int, *model.CategoryProductModel) error
 }
 
 type categoryProductRepoImpl struct {
@@ -71,6 +72,21 @@ func (cpRepo *categoryProductRepoImpl) GetAllCategoryProduct() ([]model.Category
 		arrCp = append(arrCp, *cp)
 	}
 	return arrCp, nil
+}
+
+func (cpRepo *categoryProductRepoImpl) UpdateCategoryProduct(id int , cp *model.CategoryProductModel) error{
+	qryId := "SELECT id FROM category_product WHERE id = $1"
+	err := cpRepo.db.QueryRow(qryId, cp.Id).Scan(&cp.Id)
+	if err != nil{
+		return fmt.Errorf("data category product not found")
+	}
+	cp.UpdateAt = time.Now()
+	 qry := "UPDATE category_product SET category_product_name = $1, updated_at = $2 WHERE id = $3"
+	 _, err = cpRepo.db.Exec(qry, &cp.CategoryProductName, &cp.UpdateAt, &cp.Id)
+	 if err != nil {
+		return fmt.Errorf("err on categoryProductRepoImpl.UpdateCategoryProduct : %w ", err)
+	}
+	return nil
 }
 
 func NewCategoryProductRepo(db *sql.DB) CategoryProductRepo {
