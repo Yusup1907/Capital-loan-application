@@ -13,6 +13,7 @@ type CategoryProductRepo interface {
 	GetCategoryProductByName(string) (*model.CategoryProductModel, error)
 	GetAllCategoryProduct() ([]model.CategoryProductModel, error)
 	UpdateCategoryProduct(int, *model.CategoryProductModel) error
+	DeleteCategoryProduct(int) error
 }
 
 type categoryProductRepoImpl struct {
@@ -85,6 +86,15 @@ func (cpRepo *categoryProductRepoImpl) UpdateCategoryProduct(id int , cp *model.
 	 _, err = cpRepo.db.Exec(qry, &cp.CategoryProductName, &cp.UpdateAt, &cp.Id)
 	 if err != nil {
 		return fmt.Errorf("err on categoryProductRepoImpl.UpdateCategoryProduct : %w ", err)
+	}
+	return nil
+}
+
+func (cpRepo *categoryProductRepoImpl) DeleteCategoryProduct(id int) error {
+	qry := "DELETE FROM category_product WHERE id = $1"
+	_, err := cpRepo.db.Exec(qry, id)
+	if err != nil{
+		return fmt.Errorf("error on categoryProductRepoImpl.DeleteCategoryProduct : %w ", err)
 	}
 	return nil
 }

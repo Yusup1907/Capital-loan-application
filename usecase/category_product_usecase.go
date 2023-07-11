@@ -12,6 +12,7 @@ type CategoryProductUsecase interface {
 	GetCategoryProductById(int) (*model.CategoryProductModel, error)
 	GetAllCategoryProduct() ([]model.CategoryProductModel, error)
 	UpdateCategoryProduct(int, *model.CategoryProductModel) error
+	DeleteCategoryProduct(int) error
 }
 
 type categoryProductUsecaseImpl struct {
@@ -54,6 +55,10 @@ func (cpUsecase *categoryProductUsecaseImpl) UpdateCategoryProduct(id int,cp *mo
 		}
 	}
 	return cpUsecase.cpRepo.UpdateCategoryProduct(id, cp)
+}
+
+func (cpUsecase *categoryProductUsecaseImpl) DeleteCategoryProduct(id int) error {
+	return cpUsecase.cpRepo.DeleteCategoryProduct(id)
 }
 
 func NewCategoryProductUsecase(cpRepo repository.CategoryProductRepo) CategoryProductUsecase {

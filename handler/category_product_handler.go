@@ -157,6 +157,39 @@ func(cpHandler *categoryProductHandler) UpdateCategoryProduct(ctx *gin.Context){
 	})
 }
 
+func (cpHandler *categoryProductHandler) DeleteCategoryProduct(ctx *gin.Context){
+		idText := ctx.Param("id")
+		if idText == ""{
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"errorMessage": "Id tidak boleh kosong",
+			})
+			return
+		}
+
+		id, err := strconv.Atoi(idText)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"errorMessage": "Id harus angka",
+			})
+			return
+		}
+
+		err = cpHandler.cpUsecase.DeleteCategoryProduct(id)
+		if err != nil{
+			fmt.Printf("serviceHandler.DeleteService: %v ", err.Error())
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": "Terjadi kesalahan ketika menyimpan data category product",
+			})
+			return
+		}
+		ctx.JSON(http.StatusOK,gin.H{
+			"success": true,
+		})
+}
+
 func NewCategoryProductHandler(srv *gin.Engine, cpUsecase usecase.CategoryProductUsecase) CategoryProductHandler {
 	handler := &categoryProductHandler{
 		cpUsecase: cpUsecase,
@@ -166,5 +199,6 @@ func NewCategoryProductHandler(srv *gin.Engine, cpUsecase usecase.CategoryProduc
 	srv.GET("/category_product/:id", handler.GetCategoryProductById)
 	srv.GET("/category_product", handler.GetAllCategoryProduct)
 	srv.PUT("/category_product", handler.UpdateCategoryProduct)
+	srv.DELETE("/category_product/:id", handler.DeleteCategoryProduct)
 	return handler
 }
