@@ -98,6 +98,22 @@ func (cpHandler *categoryProductHandler) GetCategoryProductById(ctx *gin.Context
 	})
 }
 
+func (cpHandler *categoryProductHandler) GetAllCategoryProduct(ctx *gin.Context){
+	arrCp, err := cpHandler.cpUsecase.GetAllCategoryProduct()
+	if err != nil{
+		fmt.Printf("error on categoryProductHandler.GetAllCategoryProduct : %v ", err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": "Terjadi kesalahan ketika mengambil data category product",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK,gin.H{
+		"success": true,
+		"data": arrCp,
+	})
+}
+
 func NewCategoryProductHandler(srv *gin.Engine, cpUsecase usecase.CategoryProductUsecase) CategoryProductHandler {
 	handler := &categoryProductHandler{
 		cpUsecase: cpUsecase,
@@ -105,5 +121,6 @@ func NewCategoryProductHandler(srv *gin.Engine, cpUsecase usecase.CategoryProduc
 
 	srv.POST("/category_product", handler.InsertCategoryProduct)
 	srv.GET("/category_product/:id", handler.GetCategoryProductById)
+	srv.GET("/category_product", handler.GetAllCategoryProduct)
 	return handler
 }

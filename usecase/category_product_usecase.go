@@ -10,6 +10,7 @@ import (
 type CategoryProductUsecase interface {
 	InsertCategoryProduct(*model.CategoryProductModel) error
 	GetCategoryProductById(int) (*model.CategoryProductModel, error)
+	GetAllCategoryProduct() ([]model.CategoryProductModel, error)
 }
 
 type categoryProductUsecaseImpl struct {
@@ -33,6 +34,10 @@ func (cpUsecase *categoryProductUsecaseImpl) InsertCategoryProduct(cp *model.Cat
 
 func (cpUsecase *categoryProductUsecaseImpl) GetCategoryProductById(id int)(*model.CategoryProductModel, error){
 	return cpUsecase.cpRepo.GetCategoryProductById(id)
+}
+
+func (cpUsecase *categoryProductUsecaseImpl) GetAllCategoryProduct() ([]model.CategoryProductModel, error){
+	return cpUsecase.cpRepo.GetAllCategoryProduct()
 }
 
 func NewCategoryProductUsecase(cpRepo repository.CategoryProductRepo) CategoryProductUsecase {
