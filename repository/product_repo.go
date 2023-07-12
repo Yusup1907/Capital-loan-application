@@ -29,19 +29,36 @@ func (p *productRepo) CreateProduct(newProduct *model.ProductModel) error {
 }
 
 func (p *productRepo) GetAllProduct() ([]*model.ProductModel, error) {
-	selectStatement := "SELECT id, product_name, description, price, stok, category_product_id, status, created_at, updated_at FROM mst_product ORDER BY id ASC"
+	selectStatement := `SELECT 
+							mst_product.id, 
+							mst_product.product_name, 
+							mst_product.description, 
+							mst_product.price, 
+							mst_product.stok, 
+							mst_product.category_product_id,
+							category_product.category_product_name,
+							mst_product.status, 
+							mst_product.created_at, 
+							mst_product.updated_at
+						FROM 
+							mst_product
+						INNER JOIN 
+							category_product ON mst_product.category_product_id = category_product.id
+						ORDER BY 
+							mst_product.id ASC`
 
 	rows, err := p.db.Query(selectStatement)
 	if err != nil {
 		return nil, fmt.Errorf("GetAllProduct() : %w", err)
-
 	}
 	defer rows.Close()
 
 	var products []*model.ProductModel
 	for rows.Next() {
 		product := &model.ProductModel{}
-		err := rows.Scan(&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.Status, &product.CreatedAt, &product.UpdatedAt)
+		err := rows.Scan(
+			&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.CategorProductyName,
+			&product.Status, &product.CreatedAt, &product.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("GetAllProduct() : %w", err)
 		}
@@ -52,12 +69,31 @@ func (p *productRepo) GetAllProduct() ([]*model.ProductModel, error) {
 }
 
 func (p *productRepo) GetProductById(id int) (*model.ProductModel, error) {
-	selectStatement := "SELECT id, product_name, description, price, stok, category_product_id, status, created_at, updated_at FROM mst_product WHERE id = $1"
+	selectStatement := `SELECT 
+							mst_product.id,
+							mst_product.product_name, 
+							mst_product.description, 
+							mst_product.price, 
+							mst_product.stok, 
+							mst_product.category_product_id,
+							category_product.category_product_name,
+							mst_product.status, 
+							mst_product.created_at, 
+							mst_product.updated_at
+						FROM 
+							mst_product
+						INNER JOIN 
+							category_product ON mst_product.category_product_id = category_product.id
+						WHERE
+							mst_product.id = $1
+						ORDER BY 
+							mst_product.id ASC`
 
 	row := p.db.QueryRow(selectStatement, id)
 
 	product := &model.ProductModel{}
-	err := row.Scan(&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.Status, &product.CreatedAt, &product.UpdatedAt)
+	err := row.Scan(&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.CategorProductyName,
+		&product.Status, &product.CreatedAt, &product.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

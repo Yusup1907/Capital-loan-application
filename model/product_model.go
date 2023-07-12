@@ -9,20 +9,21 @@ import (
 )
 
 type ProductModel struct {
-	Id                int       `json:"id"`
-	ProductName       string    `json:"product_name" validate:"required"`
-	Description       string    `json:"description"`
-	Price             float64   `json:"price" validate:"required,gte=0"`
-	Stok              int       `json:"stok" validate:"required"`
-	CategoryProductId int       `json:"category_product_id" validate:"required"`
-	Status            bool      `json:"status" validate:"required"`
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	Id                  int       `json:"id"`
+	ProductName         string    `json:"product_name" validate:"required,min=3" `
+	Description         string    `json:"description"`
+	Price               float64   `json:"price" validate:"required,gte=0"`
+	Stok                int       `json:"stok" validate:"required"`
+	CategoryProductId   int       `json:"category_product_id" validate:"required"`
+	CategorProductyName string    `json:"category_product_name"`
+	Status              bool      `json:"status" validate:"required"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
 }
 
 type CreateProductRequest struct {
 	Id                int     `json:"id"`
-	ProductName       string  `json:"product_name" validate:"required"`
+	ProductName       string  `json:"product_name" validate:"required,min=3"`
 	Description       string  `json:"description"`
 	Price             float64 `json:"price" validate:"required,gte=0"`
 	Stok              int     `json:"stok" validate:"required"`
@@ -42,8 +43,6 @@ func (p *ProductModel) ValidateUpdate() error {
 		}
 		return errors.New(errMsg)
 	}
-
-	// Implementasi validasi lainnya (misalnya validasi ketersediaan data, validasi unik, dll.)
 
 	return nil
 }
