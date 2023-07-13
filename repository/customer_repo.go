@@ -25,7 +25,7 @@ type customerRepoImpl struct {
 func (cstRepo *customerRepoImpl) AddCustomer(cst *model.CustomerModel) error {
 	qry := utils.ADD_CUSTOMER
 
-	_, err := cstRepo.db.Exec(qry, cst.Id, cst.Full_Name, cst.Address, cst.NIK, cst.Phone_number, cst.User_Id, time.Now())
+	_, err := cstRepo.db.Exec(qry, cst.Id, cst.FullName, cst.Address, cst.NIK, cst.Phone, cst.User_Id, time.Now())
 	if err != nil {
 		return fmt.Errorf("error on customerRepoImpl.AddCustomer() : %w", err)
 	}
