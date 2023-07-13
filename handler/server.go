@@ -17,6 +17,7 @@ type server struct {
 
 func (s *server) Run() {
 	NewCategoryProductHandler(s.srv, s.usecaseManager.GetCategoryProductUsecase())
+	NewGoodsHandler(s.srv, s.usecaseManager.GetGoodsUsecase())
 
 	s.srv.Run(":8080")
 }

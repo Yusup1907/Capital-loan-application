@@ -7,21 +7,31 @@ import (
 
 type RepoManager interface {
 	GetCategoryProductRepo() repository.CategoryProductRepo
+	GetGoodsRepo() repository.GoodsRepo
 }
 
 type repoManager struct {
 	infraManager InfraManager
 
 	cpRepo repository.CategoryProductRepo
+	goodsRepo repository.GoodsRepo
 }
 
-var onceLoadRepoManager sync.Once
+var onceLoadCategoryProductRepo sync.Once
+var onceLoadGoodsRepo sync.Once
 
 func (rm *repoManager) GetCategoryProductRepo() repository.CategoryProductRepo{
-	onceLoadRepoManager.Do( func() {
+	onceLoadCategoryProductRepo.Do( func() {
 		rm.cpRepo = repository.NewCategoryProductRepo(rm.infraManager.GetDB())
 	})
 	return rm.cpRepo
+}
+
+func (rm *repoManager) GetGoodsRepo() repository.GoodsRepo{
+	onceLoadGoodsRepo.Do(func() {
+		rm.goodsRepo = repository.NewGoodsRepo(rm.infraManager.GetDB())
+	})
+	return rm.goodsRepo
 }
 
 func NewRepoManager(infraManager InfraManager) RepoManager {
