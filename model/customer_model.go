@@ -1,5 +1,6 @@
 package model
 
+<<<<<<< HEAD
 import (
 	"database/sql"
 	"errors"

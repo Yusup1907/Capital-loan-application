@@ -1,12 +1,13 @@
 package manager
 
+<<<<<<< HEAD
 import (
 	"pinjam-modal-app/usecase"
 	"sync"
 )
 
 type UsecaseManager interface {
-<<<<<<< HEAD
+	GetCustomerUsecase() usecase.CustomerUsecase
 	GetProductUsecase() usecase.ProductUsecase
 	GetCategoryLoanUsecase() usecase.CategoryLoanUsecase
 	GetCategoryProductUsecase() usecase.CategoryProductUsecase
@@ -15,15 +16,25 @@ type UsecaseManager interface {
 
 type usecaseManager struct {
 	repoManager         RepoManager
+	cstUsecase usecase.CustomerUsecase
 	productUsecase      usecase.ProductUsecase
 	loanApp             usecase.LoanApplicationUsecase
 	categoryLoanUsecase usecase.CategoryLoanUsecase
 
 	onceLoadUsecase        sync.Once
+	onceLoadCustomerUsecase        sync.Once
 	onceLoadGetCategoryProductUsecase sync.Once
 	onceLoadGetGoodsUsecase sync.Once
 	onceLoadProductUsecase sync.Once
 	onceLoadLoanAppUsecase sync.Once
+}
+
+func (um *usecaseManager) GetCustomerUsecase() usecase.CustomerUsecase {
+	um.onceLoadCustomerUsecase.Do(func()  {
+		um.cstUsecase = usecase.NewCustomerUseCase(um.repoManager.GetCustomerRepo())
+	})
+
+	return um.cstUsecase
 }
 
 func (um *usecaseManager) GetCategoryLoanUsecase() usecase.CategoryLoanUsecase {
@@ -57,6 +68,7 @@ func (um *usecaseManager) GetGoodsUsecase() usecase.GoodsUsecase{
 		um.gUsecase = usecase.NewGoodsUsecase(um.repoManager.GetGoodsRepo())
 	})
 	return um.gUsecase
+
 }
 
 func NewUsecaseManager(repoManager RepoManager) UsecaseManager {

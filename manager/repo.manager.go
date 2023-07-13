@@ -6,6 +6,7 @@ import (
 )
 
 type RepoManager interface {
+	GetCustomerRepo() repository.CustomerRepo
 	GetProductRepo() repository.ProductRepo
 	GetLoanApplicationRepo() repository.LoanApplicationRepo
 	GetCategoryLoanRepo() repository.CategoryLoanRepo
@@ -15,15 +16,24 @@ type RepoManager interface {
 
 type repoManager struct {
 	infraManager     InfraManager
+	cstRepo          repository.CustomerRepo
 	productRepo      repository.ProductRepo
 	loan             repository.LoanApplicationRepo
 	categoryLoanRepo repository.CategoryLoanRepo
 
+	onceLoadCustomerRepo        sync.Once
 	onceLoadCategoryProductRepo sync.Once
 	onceLoadGoodsRepo           sync.Once
 	onceLoadProductRepo         sync.Once
 	onceLoadLoanAppRepo         sync.Once
 	onceLoadRepo                sync.Once
+}
+
+func (rm *repoManager) GetCustomerRepo() repository.CustomerRepo {
+	rm.onceLoadCustomerRepo.Do(func() {
+		rm.cstRepo = repository.NewCustomerRepo(rm.infraManager.GetDB())
+	})
+	return rm.cstRepo
 }
 
 func (rm *repoManager) GetCategoryLoanRepo() repository.CategoryLoanRepo {
@@ -58,6 +68,7 @@ func (rm *repoManager) GetGoodsRepo() repository.GoodsRepo {
 	})
 	return rm.goodsRepo
 }
+
 func NewRepoManager(infraManager InfraManager) RepoManager {
 	return &repoManager{
 		infraManager: infraManager,
