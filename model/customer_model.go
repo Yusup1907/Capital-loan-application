@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -36,4 +37,13 @@ func (c *CustomerModel) Validate() error {
 	}
 
 	return nil
+}
+
+type ValidasiCustomerModel struct {
+	Id               int
+	NIK              sql.NullString
+	NoKK             sql.NullString
+	EmergencyName    sql.NullString
+	EmergencyContact sql.NullString
+	LastSalary       sql.NullFloat64
 }

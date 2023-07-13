@@ -10,6 +10,7 @@ type AppError struct {
 func (ae AppError) Error() string {
 	return fmt.Sprintf("%v - %v", ae.ErrorCode, ae.ErrorMassage)
 }
+<<<<<<< HEAD
 
 func NewAppError(errorCode int, errorMassage string) error {
 	return AppError{
@@ -17,3 +18,5 @@ func NewAppError(errorCode int, errorMassage string) error {
 		ErrorMassage: errorMassage,
 	}
 }
+=======
+>>>>>>> syahyudi

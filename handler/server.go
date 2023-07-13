@@ -12,11 +12,14 @@ type Server interface {
 
 type server struct {
 	usecaseManager manager.UsecaseManager
+<<<<<<< HEAD
 	engine         *gin.Engine
 }
 
 func (s *server) Run() {
 	NewProductHandler(s.engine, s.usecaseManager.GetProductUsecase())
+	NewCategoryProductHandler(s.srv, s.usecaseManager.GetCategoryProductUsecase())
+	NewGoodsHandler(s.srv, s.usecaseManager.GetGoodsUsecase())
 
 	s.engine.Run()
 }
@@ -26,6 +29,7 @@ func NewServer() Server {
 	repo := manager.NewRepoManager(infra)
 	usecase := manager.NewUsecaseManager(repo)
 
+<<<<<<< HEAD
 	engine := gin.Default()
 
 	return &server{

@@ -9,6 +9,8 @@ type RepoManager interface {
 	GetProductRepo() repository.ProductRepo
 	GetLoanApplicationRepo() repository.LoanApplicationRepo
 	GetCategoryLoanRepo() repository.CategoryLoanRepo
+	GetCategoryProductRepo() repository.CategoryProductRepo
+	GetGoodsRepo() repository.GoodsRepo
 }
 
 type repoManager struct {
@@ -17,9 +19,11 @@ type repoManager struct {
 	loan             repository.LoanApplicationRepo
 	categoryLoanRepo repository.CategoryLoanRepo
 
-	onceLoadProductRepo sync.Once
-	onceLoadLoanAppRepo sync.Once
-	onceLoadRepo        sync.Once
+	onceLoadCategoryProductRepo sync.Once
+	onceLoadGoodsRepo           sync.Once
+	onceLoadProductRepo         sync.Once
+	onceLoadLoanAppRepo         sync.Once
+	onceLoadRepo                sync.Once
 }
 
 func (rm *repoManager) GetCategoryLoanRepo() repository.CategoryLoanRepo {
@@ -40,6 +44,19 @@ func (rm *repoManager) GetLoanApplicationRepo() repository.LoanApplicationRepo {
 		rm.loan = repository.NewLoanApplicationRepository(rm.infraManager.GetDB())
 	})
 	return rm.loan
+}
+func (rm *repoManager) GetCategoryProductRepo() repository.CategoryProductRepo {
+	rm.onceLoadCategoryProductRepo.Do(func() {
+		rm.cpRepo = repository.NewCategoryProductRepo(rm.infraManager.GetDB())
+	})
+	return rm.cpRepo
+}
+
+func (rm *repoManager) GetGoodsRepo() repository.GoodsRepo {
+	rm.onceLoadGoodsRepo.Do(func() {
+		rm.goodsRepo = repository.NewGoodsRepo(rm.infraManager.GetDB())
+	})
+	return rm.goodsRepo
 }
 func NewRepoManager(infraManager InfraManager) RepoManager {
 	return &repoManager{

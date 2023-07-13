@@ -6,8 +6,11 @@ import (
 )
 
 type UsecaseManager interface {
+<<<<<<< HEAD
 	GetProductUsecase() usecase.ProductUsecase
 	GetCategoryLoanUsecase() usecase.CategoryLoanUsecase
+	GetCategoryProductUsecase() usecase.CategoryProductUsecase
+	GetGoodsUsecase() usecase.GoodsUsecase
 }
 
 type usecaseManager struct {
@@ -17,6 +20,8 @@ type usecaseManager struct {
 	categoryLoanUsecase usecase.CategoryLoanUsecase
 
 	onceLoadUsecase        sync.Once
+	onceLoadGetCategoryProductUsecase sync.Once
+	onceLoadGetGoodsUsecase sync.Once
 	onceLoadProductUsecase sync.Once
 	onceLoadLoanAppUsecase sync.Once
 }
@@ -40,6 +45,20 @@ func (um *usecaseManager) GetLoanAppUsecase() usecase.LoanApplicationUsecase {
 	})
 	return um.loanApp
 }
+func (um *usecaseManager) GetCategoryProductUsecase() usecase.CategoryProductUsecase {
+	um.onceLoadGetCategoryProductUsecase.Do(func() {
+		um.cpUsecase = usecase.NewCategoryProductUsecase(um.repoManager.GetCategoryProductRepo())
+	})
+	return um.cpUsecase
+}
+
+func (um *usecaseManager) GetGoodsUsecase() usecase.GoodsUsecase{
+	um.onceLoadGetGoodsUsecase.Do(func() {
+		um.gUsecase = usecase.NewGoodsUsecase(um.repoManager.GetGoodsRepo())
+	})
+	return um.gUsecase
+}
+
 func NewUsecaseManager(repoManager RepoManager) UsecaseManager {
 	return &usecaseManager{
 		repoManager: repoManager,
