@@ -3,17 +3,17 @@ package apperror
 import "fmt"
 
 type AppError struct {
-	ErrorMassage string
+	ErrorMessage string
 	ErrorCode    int
 }
 
 func (ae AppError) Error() string {
-	return fmt.Sprintf("%v - %v", ae.ErrorCode, ae.ErrorMassage)
+	return fmt.Sprintf("%v - %v", ae.ErrorCode, ae.ErrorMessage)
 }
 
-func NewAppError(errorCode int, errorMassage string) error {
+func NewAppError(errorCode int, errorMessage string) error {
 	return AppError{
 		ErrorCode:    errorCode,
-		ErrorMassage: errorMassage,
+		ErrorMessage: errorMessage,
 	}
 }

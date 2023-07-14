@@ -31,7 +31,7 @@ func (cstHandler customerHandlerImpl) AddCustomer(ctx *gin.Context) {
 		return
 	}
 
-	if len(cst.Full_Name) > 15 {
+	if len(cst.FullName) > 15 {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"success":      false,
 			"errorMessage": "Name is to long max at 15 character",
@@ -209,14 +209,13 @@ func (cstHandler customerHandlerImpl) DeleteCustomer(ctx *gin.Context) {
 
 func NewCustomerHandler(router  *gin.Engine, cstUsecase usecase.CustomerUsecase) CustomerHandler {
 	cstHandler := &customerHandlerImpl{
-		router: srv,
 		cstUsecase: cstUsecase,
 	}
-	srv.POST("/Customer", cstHandler.AddCustomer)
-	srv.GET("/Customer", cstHandler.GetAllCustomer)
-	srv.GET("/Customer/:id", cstHandler.GetCustomerById)
-	srv.PUT("/Customer/:id", cstHandler.UpdateCustomer)
-	srv.DELETE("/Customer/:id", cstHandler.DeleteCustomer)
+	router.POST("/Customer", cstHandler.AddCustomer)
+	router.GET("/Customer", cstHandler.GetAllCustomer)
+	router.GET("/Customer/:id", cstHandler.GetCustomerById)
+	router.PUT("/Customer/:id", cstHandler.UpdateCustomer)
+	router.DELETE("/Customer/:id", cstHandler.DeleteCustomer)
 
 	return cstHandler
 }

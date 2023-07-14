@@ -192,14 +192,13 @@ func (cpHandler *categoryProductHandler) DeleteCategoryProduct(ctx *gin.Context)
 
 func NewCategoryProductHandler(router *gin.Engine, cpUsecase usecase.CategoryProductUsecase) CategoryProductHandler {
 	handler := &categoryProductHandler{
-		router:    srv,
 		cpUsecase: cpUsecase,
 	}
 
-	srv.POST("/category_product", handler.InsertCategoryProduct)
-	srv.GET("/category_product/:id", handler.GetCategoryProductById)
-	srv.GET("/category_product", handler.GetAllCategoryProduct)
-	srv.PUT("/category_product", handler.UpdateCategoryProduct)
-	srv.DELETE("/category_product/:id", handler.DeleteCategoryProduct)
+	router.POST("/category_product", handler.InsertCategoryProduct)
+	router.GET("/category_product/:id", handler.GetCategoryProductById)
+	router.GET("/category_product", handler.GetAllCategoryProduct)
+	router.PUT("/category_product", handler.UpdateCategoryProduct)
+	router.DELETE("/category_product/:id", handler.DeleteCategoryProduct)
 	return handler
 }

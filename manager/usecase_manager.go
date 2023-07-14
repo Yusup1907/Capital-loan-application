@@ -1,6 +1,5 @@
 package manager
 
-<<<<<<< HEAD
 import (
 	"pinjam-modal-app/usecase"
 	"sync"
@@ -20,6 +19,10 @@ type usecaseManager struct {
 	productUsecase      usecase.ProductUsecase
 	loanApp             usecase.LoanApplicationUsecase
 	categoryLoanUsecase usecase.CategoryLoanUsecase
+	categoryProductUsecase		usecase.CategoryProductUsecase
+	trxGoodsUsecase				usecase.GoodsUsecase	
+
+
 
 	onceLoadUsecase        sync.Once
 	onceLoadCustomerUsecase        sync.Once
@@ -58,16 +61,16 @@ func (um *usecaseManager) GetLoanAppUsecase() usecase.LoanApplicationUsecase {
 }
 func (um *usecaseManager) GetCategoryProductUsecase() usecase.CategoryProductUsecase {
 	um.onceLoadGetCategoryProductUsecase.Do(func() {
-		um.cpUsecase = usecase.NewCategoryProductUsecase(um.repoManager.GetCategoryProductRepo())
+		um.categoryProductUsecase = usecase.NewCategoryProductUsecase(um.repoManager.GetCategoryProductRepo())
 	})
-	return um.cpUsecase
+	return um.categoryProductUsecase
 }
 
 func (um *usecaseManager) GetGoodsUsecase() usecase.GoodsUsecase{
 	um.onceLoadGetGoodsUsecase.Do(func() {
-		um.gUsecase = usecase.NewGoodsUsecase(um.repoManager.GetGoodsRepo())
+		um.trxGoodsUsecase = usecase.NewGoodsUsecase(um.repoManager.GetGoodsRepo())
 	})
-	return um.gUsecase
+	return um.trxGoodsUsecase
 
 }
 

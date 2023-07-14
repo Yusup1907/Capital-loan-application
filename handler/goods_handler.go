@@ -91,11 +91,10 @@ func (goodsHandler *goodsHandlerImpl) GetGoodsById(ctx *gin.Context) {
 
 func NewGoodsHandler(router *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHandler {
 	ghandler := goodsHandlerImpl{
-		router : srv,
 		goodsUsecase: goodsUsecase,
 	}
 
-	srv.POST("/goods", ghandler.InsertGoods)
-	srv.GET("/goods/:id", ghandler.GetGoodsById)
+	router.POST("/goods", ghandler.InsertGoods)
+	router.GET("/goods/:id", ghandler.GetGoodsById)
 	return ghandler
 }

@@ -28,7 +28,7 @@ func (cpUsecase *categoryProductUsecaseImpl) InsertCategoryProduct(cp *model.Cat
 	if cpDB != nil {
 		return apperror.AppError{
 			ErrorCode:    1,
-			ErrorMassage: fmt.Sprintf("data category product dengan nama %v sudah ada", cp.CategoryProductName),
+			ErrorMessage: fmt.Sprintf("data category product dengan nama %v sudah ada", cp.CategoryProductName),
 		}
 	}
 	return cpUsecase.cpRepo.InsertCategoryProduct(cp)
@@ -51,7 +51,7 @@ func (cpUsecase *categoryProductUsecaseImpl) UpdateCategoryProduct(id int,cp *mo
 	if cpDB != nil {
 		return apperror.AppError{
 			ErrorCode:    1,
-			ErrorMassage: fmt.Sprintf("data category product dengan nama %v sudah ada", cp.CategoryProductName),
+			ErrorMessage: fmt.Sprintf("data category product dengan nama %v sudah ada", cp.CategoryProductName),
 		}
 	}
 	return cpUsecase.cpRepo.UpdateCategoryProduct(id, cp)
