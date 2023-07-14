@@ -12,6 +12,7 @@ type LoanApplicationRepo interface {
 	GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error)
 	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
 	LoanRepayment(id int, repayment *model.LoanRepaymentModel) error
+	UpdateRepaymentStatus(id int, status string) error
 }
 
 type loanApplicationRepo struct {
@@ -135,10 +136,19 @@ func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplica
 }
 
 func (r *loanApplicationRepo) LoanRepayment(id int, repayment *model.LoanRepaymentModel) error {
-	updateStatment := "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3, updated_at = $4 WHERE id = $5"
-	_, err := r.db.Exec(updateStatment, repayment.PaymentDate, repayment.Payment, repayment.RepaymentStatus, repayment.UpdatedAt, id)
+	updateStatment := "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3::loan_status, updated_at = $4 WHERE id = $5"
+	_, err := r.db.Exec(updateStatment, repayment.PaymentDate, repayment.Payment, model.StatusEnum(repayment.RepaymentStatus), repayment.UpdatedAt, id)
 	if err != nil {
 		return fmt.Errorf("error on loanApplicationRepo.LoanRepayment() : %w", err)
+	}
+	return nil
+}
+
+func (r *loanApplicationRepo) UpdateRepaymentStatus(id int, status string) error {
+	updateStatement := "UPDATE trx_loan SET repayment_status = $1 WHERE id = $2"
+	_, err := r.db.Exec(updateStatement, status, id)
+	if err != nil {
+		return fmt.Errorf("failed to update repayment status: %w", err)
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"fmt"
+	"log"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/repository"
 	"time"
@@ -31,7 +32,7 @@ func (uc *loanApplicationUsecase) CreateLoanApplication(application *model.LoanA
 		customerDB.EmergencyContact.Valid && customerDB.EmergencyContact.String != "" &&
 		customerDB.LastSalary.Valid && customerDB.LastSalary.Float64 != 0 {
 		application.Status = model.LoanStatusApprove
-		application.RepaymentStatus = model.RepaymentStatusBelumLunas
+		application.RepaymentStatus = model.StatusEnum(model.RepaymentStatusBelumLunas)
 		application.DueDate = time.Now().AddDate(0, 2, 0)
 	} else {
 		application.Status = model.LoanStatusDenied
@@ -68,7 +69,12 @@ func (uc *loanApplicationUsecase) LoanRepayment(id int, repayment *model.LoanRep
 	}
 
 	if repayment.Payment < loan.Amount {
+		log.Printf("Payment amount: %v, Loan amount: %v", repayment.Payment, loan.Amount)
 		return fmt.Errorf("payment amount is less than the loan amount")
+	}
+
+	if repayment.Payment == loan.Amount {
+		repayment.RepaymentStatus = model.RepaymentStatusLunas
 	}
 
 	if repayment.PaymentDate.Before(loan.DueDate) {
