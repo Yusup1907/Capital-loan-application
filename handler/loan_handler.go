@@ -15,7 +15,7 @@ type LoanHandler struct {
 	usecase usecase.LoanApplicationUsecase
 }
 
-func (lh *LoanHandler) CreateLoanApplication(ctx *gin.Context) {
+func (lh *LoanHandler) createLoanApplication(ctx *gin.Context) {
 	var req model.LoanJoinRequest
 	err := ctx.ShouldBindJSON(&req)
 	if err != nil {
@@ -61,13 +61,29 @@ func (lh *LoanHandler) CreateLoanApplication(ctx *gin.Context) {
 	}
 }
 
+func (lh *LoanHandler) getAllLoanApplications(ctx *gin.Context) {
+	loanApplications, err := lh.usecase.GetAllLoanApplications()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": "Failed to get loan applications",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    loanApplications,
+	})
+}
+
 func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUsecase) *LoanHandler {
 	handler := LoanHandler{
 		router:  r,
 		usecase: usecase,
 	}
-	r.POST("/loan", handler.CreateLoanApplication)
-	// r.GET("/product", handler.getAllProduct)
+	r.POST("/loan", handler.createLoanApplication)
+	r.GET("/loan", handler.getAllLoanApplications)
 	// r.GET("/product/:id", handler.getProductById)
 	// r.PUT("/product/:id", handler.updateProduct)
 	// r.DELETE("/product/:id", handler.deleteProduct)

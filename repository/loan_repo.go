@@ -9,6 +9,7 @@ import (
 type LoanApplicationRepo interface {
 	CreateLoanApplication(application *model.LoanApplicationModel) error
 	GetCustomerById(int) (*model.ValidasiCustomerModel, error)
+	GetAllLoanApplications() ([]*model.LoanApplicationModel, error)
 }
 
 type loanApplicationRepo struct {
@@ -43,6 +44,45 @@ func (r *loanApplicationRepo) GetCustomerById(id int) (*model.ValidasiCustomerMo
 	}
 
 	return customer, nil
+}
+
+func (r *loanApplicationRepo) GetAllLoanApplications() ([]*model.LoanApplicationModel, error) {
+	query := "SELECT id, customer_id, loan_date, due_date, category_loan_id, amount, description, status, created_at, updated_at FROM trx_loan"
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying loan applications: %w", err)
+	}
+	defer rows.Close()
+
+	applications := []*model.LoanApplicationModel{}
+
+	for rows.Next() {
+		application := &model.LoanApplicationModel{}
+		err := rows.Scan(
+			&application.Id,
+			&application.CustomerId,
+			&application.LoanDate,
+			&application.DueDate,
+			&application.CategoryLoanId,
+			&application.Amount,
+			&application.Description,
+			&application.Status,
+			&application.CreatedAt,
+			&application.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning loan application row: %w", err)
+		}
+
+		applications = append(applications, application)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating loan application rows: %w", err)
+	}
+
+	return applications, nil
 }
 
 func NewLoanApplicationRepository(db *sql.DB) LoanApplicationRepo {

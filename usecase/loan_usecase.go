@@ -9,6 +9,7 @@ import (
 
 type LoanApplicationUsecase interface {
 	CreateLoanApplication(application *model.LoanApplicationModel) error
+	GetAllLoanApplications() ([]*model.LoanApplicationModel, error)
 }
 
 type loanApplicationUsecase struct {
@@ -40,6 +41,10 @@ func (uc *loanApplicationUsecase) CreateLoanApplication(application *model.LoanA
 	}
 
 	return nil
+}
+
+func (uc *loanApplicationUsecase) GetAllLoanApplications() ([]*model.LoanApplicationModel, error) {
+	return uc.repo.GetAllLoanApplications()
 }
 
 func NewLoanApplicationUseCase(repo repository.LoanApplicationRepo) LoanApplicationUsecase {
