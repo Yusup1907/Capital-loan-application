@@ -8,9 +8,10 @@ type LoanApplicationJoinModel struct {
 	LoanDate         time.Time `json:"loan_date"`
 	DueDate          time.Time `json:"due_date"`
 	CategoryLoanID   int       `json:"category_loan_id"`
-	Amount           int       `json:"amount"`
+	Amount           float64   `json:"amount"`
 	Description      string    `json:"description"`
 	Status           string    `json:"status"`
+	RepaymentStatus  string    `json:"repayment_status"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
 	FullName         string    `json:"full_name"`

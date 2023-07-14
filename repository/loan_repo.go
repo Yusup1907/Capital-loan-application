@@ -11,6 +11,7 @@ type LoanApplicationRepo interface {
 	GetCustomerById(int) (*model.ValidasiCustomerModel, error)
 	GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error)
 	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
+	LoanRepayment(id int, repayment *model.LoanRepaymentModel) error
 }
 
 type loanApplicationRepo struct {
@@ -19,11 +20,11 @@ type loanApplicationRepo struct {
 
 func (r *loanApplicationRepo) CreateLoanApplication(application *model.LoanApplicationModel) error {
 	insertStatement := `
-		INSERT INTO trx_loan (customer_id, loan_date, due_date, category_loan_id, amount, description, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id
+		INSERT INTO trx_loan (customer_id, loan_date, due_date, category_loan_id, amount, description, status, repayment_status, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
 	`
 
-	err := r.db.QueryRow(insertStatement, application.CustomerId, application.LoanDate, application.DueDate, application.CategoryLoanId, application.Amount, application.Description, application.Status, application.CreatedAt, application.UpdatedAt).Scan(&application.Id)
+	err := r.db.QueryRow(insertStatement, application.CustomerId, application.LoanDate, application.DueDate, application.CategoryLoanId, application.Amount, application.Description, application.Status, application.RepaymentStatus, application.CreatedAt, application.UpdatedAt).Scan(&application.Id)
 	if err != nil {
 		return fmt.Errorf("error on loanApplicationRepo.CreateLoanApplication: %w", err)
 	}
@@ -51,7 +52,7 @@ func (r *loanApplicationRepo) GetLoanApplications(page, limit int) ([]*model.Loa
 	offset := (page - 1) * limit
 
 	selectStatement := `
-		SELECT la.id, la.customer_id, la.loan_date, la.due_date, la.category_loan_id, la.amount, la.description, la.status, la.created_at, la.updated_at,
+		SELECT la.id, la.customer_id, la.loan_date, la.due_date, la.category_loan_id, la.amount, la.description, la.status, la.repayment_status, la.created_at, la.updated_at,
 			   mc.full_name, mc.address, mc.nik, mc.phone_number, mc.nokk, mc.emergencyname, mc.emergencycontact, mc.last_salary
 		FROM trx_loan la
 		INNER JOIN mst_customer mc ON la.customer_id = mc.id
@@ -70,7 +71,7 @@ func (r *loanApplicationRepo) GetLoanApplications(page, limit int) ([]*model.Loa
 		application := &model.LoanApplicationJoinModel{}
 		err := rows.Scan(
 			&application.Id, &application.CustomerId, &application.LoanDate, &application.DueDate, &application.CategoryLoanID,
-			&application.Amount, &application.Description, &application.Status, &application.CreatedAt, &application.UpdatedAt,
+			&application.Amount, &application.Description, &application.Status, &application.RepaymentStatus, &application.CreatedAt, &application.UpdatedAt,
 			&application.FullName, &application.Address, &application.NIK, &application.PhoneNumber, &application.NoKK, &application.EmergencyName,
 			&application.EmergencyContact, &application.LastSalary,
 		)
@@ -96,7 +97,8 @@ func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplica
 							la.category_loan_id, 
 							la.amount, 
 							la.description, 
-							la.status, 
+							la.status,
+							la.repayment_status, 
 							la.created_at, 
 							la.updated_at,
 							mc.full_name, 
@@ -118,7 +120,7 @@ func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplica
 	loan := &model.LoanApplicationJoinModel{}
 	err := r.db.QueryRow(selectStatement, id).Scan(
 		&loan.Id, &loan.CustomerId, &loan.LoanDate, &loan.DueDate, &loan.CategoryLoanID,
-		&loan.Amount, &loan.Description, &loan.Status, &loan.CreatedAt, &loan.UpdatedAt,
+		&loan.Amount, &loan.Description, &loan.Status, &loan.RepaymentStatus, &loan.CreatedAt, &loan.UpdatedAt,
 		&loan.FullName, &loan.Address, &loan.NIK, &loan.PhoneNumber, &loan.NoKK, &loan.EmergencyName,
 		&loan.EmergencyContact, &loan.LastSalary,
 	)
@@ -130,6 +132,15 @@ func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplica
 	}
 
 	return loan, nil
+}
+
+func (r *loanApplicationRepo) LoanRepayment(id int, repayment *model.LoanRepaymentModel) error {
+	updateStatment := "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3, updated_at = $4 WHERE id = $5"
+	_, err := r.db.Exec(updateStatment, repayment.PaymentDate, repayment.Payment, repayment.RepaymentStatus, repayment.UpdatedAt, id)
+	if err != nil {
+		return fmt.Errorf("error on loanApplicationRepo.LoanRepayment() : %w", err)
+	}
+	return nil
 }
 
 func NewLoanApplicationRepository(db *sql.DB) LoanApplicationRepo {

@@ -28,15 +28,16 @@ func (lh *LoanHandler) createLoanApplication(ctx *gin.Context) {
 	}
 
 	loan := model.LoanApplicationModel{
-		CustomerId:     req.CustomerId,
-		LoanDate:       req.LoanDate,
-		DueDate:        req.DueDate,
-		CategoryLoanId: req.CategoryLoanId,
-		Amount:         req.Amount,
-		Description:    req.Description,
-		Status:         req.Status,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		CustomerId:      req.CustomerId,
+		LoanDate:        req.LoanDate,
+		DueDate:         req.DueDate,
+		CategoryLoanId:  req.CategoryLoanId,
+		Amount:          req.Amount,
+		Description:     req.Description,
+		Status:          req.Status,
+		RepaymentStatus: req.RepaymentStatus,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	err = lh.usecase.CreateLoanApplication(&loan)
