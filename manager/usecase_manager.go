@@ -1,6 +1,5 @@
 package manager
 
-<<<<<<< HEAD
 import (
 	"pinjam-modal-app/usecase"
 	"sync"
@@ -12,25 +11,32 @@ type UsecaseManager interface {
 	GetCategoryLoanUsecase() usecase.CategoryLoanUsecase
 	GetCategoryProductUsecase() usecase.CategoryProductUsecase
 	GetGoodsUsecase() usecase.GoodsUsecase
+	GetLoanAppUsecase() usecase.LoanApplicationUsecase
 }
 
 type usecaseManager struct {
-	repoManager         RepoManager
-	cstUsecase usecase.CustomerUsecase
+	repoManager RepoManager
+	cstUsecase  usecase.CustomerUsecase
+
 	productUsecase      usecase.ProductUsecase
 	loanApp             usecase.LoanApplicationUsecase
 	categoryLoanUsecase usecase.CategoryLoanUsecase
 
-	onceLoadUsecase        sync.Once
-	onceLoadCustomerUsecase        sync.Once
+	categoryProductUsecase usecase.CategoryProductUsecase
+	trxGoodsUsecase        usecase.GoodsUsecase
+
+	onceLoadUsecase         sync.Once
+	onceLoadCustomerUsecase sync.Once
+
 	onceLoadGetCategoryProductUsecase sync.Once
+
 	onceLoadGetGoodsUsecase sync.Once
-	onceLoadProductUsecase sync.Once
-	onceLoadLoanAppUsecase sync.Once
+	onceLoadProductUsecase  sync.Once
+	onceLoadLoanAppUsecase  sync.Once
 }
 
 func (um *usecaseManager) GetCustomerUsecase() usecase.CustomerUsecase {
-	um.onceLoadCustomerUsecase.Do(func()  {
+	um.onceLoadCustomerUsecase.Do(func() {
 		um.cstUsecase = usecase.NewCustomerUseCase(um.repoManager.GetCustomerRepo())
 	})
 
@@ -58,16 +64,16 @@ func (um *usecaseManager) GetLoanAppUsecase() usecase.LoanApplicationUsecase {
 }
 func (um *usecaseManager) GetCategoryProductUsecase() usecase.CategoryProductUsecase {
 	um.onceLoadGetCategoryProductUsecase.Do(func() {
-		um.cpUsecase = usecase.NewCategoryProductUsecase(um.repoManager.GetCategoryProductRepo())
+		um.categoryProductUsecase = usecase.NewCategoryProductUsecase(um.repoManager.GetCategoryProductRepo())
 	})
-	return um.cpUsecase
+	return um.categoryProductUsecase
 }
 
-func (um *usecaseManager) GetGoodsUsecase() usecase.GoodsUsecase{
+func (um *usecaseManager) GetGoodsUsecase() usecase.GoodsUsecase {
 	um.onceLoadGetGoodsUsecase.Do(func() {
-		um.gUsecase = usecase.NewGoodsUsecase(um.repoManager.GetGoodsRepo())
+		um.trxGoodsUsecase = usecase.NewGoodsUsecase(um.repoManager.GetGoodsRepo())
 	})
-	return um.gUsecase
+	return um.trxGoodsUsecase
 
 }
 

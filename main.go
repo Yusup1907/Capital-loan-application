@@ -1,7 +1,10 @@
 package main
 
-import "pinjam-modal-app/handler"
+import (
+	"pinjam-modal-app/handler"
+)
 
 func main() {
 	handler.NewServer().Run()
+
 }

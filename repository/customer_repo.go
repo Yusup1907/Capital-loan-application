@@ -25,7 +25,7 @@ type customerRepoImpl struct {
 func (cstRepo *customerRepoImpl) AddCustomer(cst *model.CustomerModel) error {
 	qry := utils.ADD_CUSTOMER
 
-	_, err := cstRepo.db.Exec(qry, cst.Id, cst.FullName, cst.Address, cst.NIK, cst.Phone, cst.User_Id, time.Now())
+	_, err := cstRepo.db.Exec(qry, cst.Id, cst.FullName, cst.Address, cst.NIK, cst.Phone, cst.UserId, time.Now())
 	if err != nil {
 		return fmt.Errorf("error on customerRepoImpl.AddCustomer() : %w", err)
 	}
@@ -36,7 +36,7 @@ func (cstRepo *customerRepoImpl) GetCustomerById(id int) (*model.CustomerModel, 
 	qry := utils.GET_CUSTOMER_BY_ID
 
 	cst := &model.CustomerModel{}
-	err := cstRepo.db.QueryRow(qry, id).Scan(&cst.Id, &cst.Full_Name, &cst.Address, &cst.NIK, &cst.Phone_number, &cst.User_Id, &cst.Created_at, &cst.Updated_at)
+	err := cstRepo.db.QueryRow(qry, id).Scan(&cst.Id, &cst.FullName, &cst.Address, &cst.NIK, &cst.Phone, &cst.UserId, &cst.CreatedAt, &cst.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -49,7 +49,7 @@ func (cstRepo *customerRepoImpl) GetCustomerById(id int) (*model.CustomerModel, 
 func (cstRepo *customerRepoImpl) UpdateCustomer(cst *model.CustomerModel) error {
 	qry := utils.UPDATE_CUSTOMER
 
-	result, err := cstRepo.db.Exec(qry, cst.Full_Name, cst.Address, cst.NIK, cst.Phone_number, cst.User_Id, time.Now(), cst.Id)
+	result, err := cstRepo.db.Exec(qry, cst.FullName, cst.Address, cst.NIK, cst.Phone, cst.UserId, time.Now(), cst.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil
@@ -82,7 +82,7 @@ func (cusRepo *customerRepoImpl) GetAllCustomer() ([]model.CustomerModel, error)
 
 	arrCus := []model.CustomerModel{}
 	for rows.Next() {
-		rows.Scan(&cus.Id, &cus.Full_Name, &cus.Address, &cus.NIK, &cus.Phone_number, &cus.User_Id, &cus.Created_at, &cus.Updated_at)
+		rows.Scan(&cus.Id, &cus.FullName, &cus.Address, &cus.NIK, &cus.Phone, &cus.UserId, &cus.CreatedAt, &cus.UpdatedAt)
 		arrCus = append(arrCus, *cus)
 	}
 	return arrCus, nil
@@ -111,7 +111,7 @@ func (cstRepo *customerRepoImpl) GetCustomerByNIK(nik string) (*model.CustomerMo
 	qry := utils.GET_CUSTOMER_BY_NIK
 
 	cst := &model.CustomerModel{}
-	err := cstRepo.db.QueryRow(qry, nik).Scan(&cst.Id, &cst.Full_Name, &cst.Address, &cst.NIK, &cst.Phone_number, &cst.User_Id, &cst.Created_at, &cst.Updated_at)
+	err := cstRepo.db.QueryRow(qry, nik).Scan(&cst.Id, &cst.FullName, &cst.Address, &cst.NIK, &cst.Phone, &cst.UserId, &cst.CreatedAt, &cst.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -125,7 +125,7 @@ func (cstRepo *customerRepoImpl) GetCustomerByNumber(phone_number string) (*mode
 	qry := utils.GET_CUSTOMER_BY_NUMBER
 
 	cst := &model.CustomerModel{}
-	err := cstRepo.db.QueryRow(qry, phone_number).Scan(&cst.Id, &cst.Full_Name, &cst.Address, &cst.NIK, &cst.Phone_number, &cst.User_Id, &cst.Created_at, &cst.Updated_at)
+	err := cstRepo.db.QueryRow(qry, phone_number).Scan(&cst.Id, &cst.FullName, &cst.Address, &cst.NIK, &cst.Phone, &cst.UserId, &cst.CreatedAt, &cst.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil

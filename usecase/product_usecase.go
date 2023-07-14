@@ -33,7 +33,7 @@ func (p *productUsecase) CreateProduct(product *model.ProductModel) error {
 	if productByName != nil {
 		return apperror.AppError{
 			ErrorCode:    2,
-			ErrorMassage: fmt.Sprintf("Data produk dengan nama %v sudah ada", product.ProductName),
+			ErrorMessage: fmt.Sprintf("Data produk dengan nama %v sudah ada", product.ProductName),
 		}
 	}
 
@@ -62,7 +62,7 @@ func (p *productUsecase) UpdateProduct(id int, updateProduct *model.ProductModel
 	if existingProduct == nil {
 		return apperror.AppError{
 			ErrorCode:    2,
-			ErrorMassage: fmt.Sprintf("Data product dengan id %v tidak ada", id),
+			ErrorMessage: fmt.Sprintf("Data product dengan id %v tidak ada", id),
 		}
 	}
 
@@ -76,7 +76,7 @@ func (p *productUsecase) UpdateProduct(id int, updateProduct *model.ProductModel
 		if duplicateProduct != nil {
 			return apperror.AppError{
 				ErrorCode:    3,
-				ErrorMassage: fmt.Sprintf("Data product dengan nama product %v sudah ada", updateProduct.ProductName),
+				ErrorMessage: fmt.Sprintf("Data product dengan nama product %v sudah ada", updateProduct.ProductName),
 			}
 		}
 	}
@@ -99,7 +99,7 @@ func (p *productUsecase) DeleteProduct(id int) error {
 	if existingProduct == nil {
 		return apperror.AppError{
 			ErrorCode:    2,
-			ErrorMassage: fmt.Sprintf("Data product dengan id %v tidak ada", id),
+			ErrorMessage: fmt.Sprintf("Data product dengan id %v tidak ada", id),
 		}
 	}
 

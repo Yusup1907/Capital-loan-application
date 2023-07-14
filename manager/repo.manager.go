@@ -20,6 +20,8 @@ type repoManager struct {
 	productRepo      repository.ProductRepo
 	loan             repository.LoanApplicationRepo
 	categoryLoanRepo repository.CategoryLoanRepo
+	CategoryProduct  repository.CategoryProductRepo
+	TrxGoods         repository.GoodsRepo
 
 	onceLoadCustomerRepo        sync.Once
 	onceLoadCategoryProductRepo sync.Once
@@ -57,16 +59,16 @@ func (rm *repoManager) GetLoanApplicationRepo() repository.LoanApplicationRepo {
 }
 func (rm *repoManager) GetCategoryProductRepo() repository.CategoryProductRepo {
 	rm.onceLoadCategoryProductRepo.Do(func() {
-		rm.cpRepo = repository.NewCategoryProductRepo(rm.infraManager.GetDB())
+		rm.CategoryProduct = repository.NewCategoryProductRepo(rm.infraManager.GetDB())
 	})
-	return rm.cpRepo
+	return rm.CategoryProduct
 }
 
 func (rm *repoManager) GetGoodsRepo() repository.GoodsRepo {
 	rm.onceLoadGoodsRepo.Do(func() {
-		rm.goodsRepo = repository.NewGoodsRepo(rm.infraManager.GetDB())
+		rm.TrxGoods = repository.NewGoodsRepo(rm.infraManager.GetDB())
 	})
-	return rm.goodsRepo
+	return rm.TrxGoods
 }
 
 func NewRepoManager(infraManager InfraManager) RepoManager {

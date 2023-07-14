@@ -28,10 +28,10 @@ func (cstUsecase *customerUsecaseImpl) AddCustomer(cst *model.CustomerModel) err
 	if cstDb != nil {
 		return apperror.AppError{
 			ErrorCode:    1,
-			ErrorMessage: fmt.Sprintf("NIK %v telah terdaftar!", cst.NIK),
+			ErrorMessage: fmt.Sprintf("NIK %v telah terdaftar!",cst.NIK),
 		}
 	}
-	numDb, err := cstUsecase.cstRepo.GetCustomerByNumber(cst.Phone_number)
+	numDb, err := cstUsecase.cstRepo.GetCustomerByNumber(cst.Phone)
 	if err != nil {
 		return fmt.Errorf("serviceUsecaseImpl.InsertService() : %w", err)
 	}
@@ -39,7 +39,7 @@ func (cstUsecase *customerUsecaseImpl) AddCustomer(cst *model.CustomerModel) err
 	if numDb != nil {
 		return apperror.AppError{
 			ErrorCode:    1,
-			ErrorMessage: fmt.Sprintf("Nomor telpon %v telah terdaftar!", cst.Phone_number),
+			ErrorMessage: fmt.Sprintf("Nomor telpon %v telah terdaftar!", cst.Phone),
 		}
 	}
 
