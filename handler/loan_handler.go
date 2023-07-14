@@ -94,6 +94,32 @@ func (lh *LoanHandler) getLoanApplications(ctx *gin.Context) {
 	})
 }
 
+func (lh *LoanHandler) getLoanApplicationById(ctx *gin.Context) {
+	idParam := ctx.Param("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "Invalid ID",
+		})
+		return
+	}
+
+	loanApplication, err := lh.usecase.GetLoanApplicationById(id)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": "Failed to retrieve loan application",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    loanApplication,
+	})
+}
+
 func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUsecase) *LoanHandler {
 	handler := LoanHandler{
 		router:  r,
@@ -101,7 +127,7 @@ func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUse
 	}
 	r.POST("/loan", handler.createLoanApplication)
 	r.GET("/loan", handler.getLoanApplications)
-	// r.GET("/product/:id", handler.getProductById)
+	r.GET("/loan/:id", handler.getLoanApplicationById)
 	// r.PUT("/product/:id", handler.updateProduct)
 	// r.DELETE("/product/:id", handler.deleteProduct)
 

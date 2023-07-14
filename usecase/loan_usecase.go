@@ -10,6 +10,7 @@ import (
 type LoanApplicationUsecase interface {
 	CreateLoanApplication(application *model.LoanApplicationModel) error
 	GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error)
+	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
 }
 
 type loanApplicationUsecase struct {
@@ -52,6 +53,10 @@ func (uc *loanApplicationUsecase) GetLoanApplications(page, limit int) ([]*model
 	}
 
 	return uc.repo.GetLoanApplications(page, limit)
+}
+
+func (uc *loanApplicationUsecase) GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error) {
+	return uc.repo.GetLoanApplicationById(id)
 }
 
 func NewLoanApplicationUseCase(repo repository.LoanApplicationRepo) LoanApplicationUsecase {

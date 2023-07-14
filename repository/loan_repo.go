@@ -10,6 +10,7 @@ type LoanApplicationRepo interface {
 	CreateLoanApplication(application *model.LoanApplicationModel) error
 	GetCustomerById(int) (*model.ValidasiCustomerModel, error)
 	GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error)
+	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
 }
 
 type loanApplicationRepo struct {
@@ -54,7 +55,7 @@ func (r *loanApplicationRepo) GetLoanApplications(page, limit int) ([]*model.Loa
 			   mc.full_name, mc.address, mc.nik, mc.phone_number, mc.nokk, mc.emergencyname, mc.emergencycontact, mc.last_salary
 		FROM trx_loan la
 		INNER JOIN mst_customer mc ON la.customer_id = mc.id
-		ORDER BY la.id
+		ORDER BY la.id ASC
 		OFFSET $1 LIMIT $2
 	`
 
@@ -86,19 +87,40 @@ func (r *loanApplicationRepo) GetLoanApplications(page, limit int) ([]*model.Loa
 	return applications, nil
 }
 
-func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplicationModel, error) {
-	selectStatement := `
-		SELECT id, customer_id, loan_date, due_date, category_loan_id, amount, description, status, created_at, updated_at
-		FROM trx_loan 
-		WHERE id = $1
-		ORDER BY 
-		id ASC
-	`
+func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error) {
+	selectStatement := `SELECT 
+							la.id, 
+							la.customer_id, 
+							la.loan_date, 
+							la.due_date, 
+							la.category_loan_id, 
+							la.amount, 
+							la.description, 
+							la.status, 
+							la.created_at, 
+							la.updated_at,
+							mc.full_name, 
+							mc.address, 
+							mc.nik, 
+							mc.phone_number, 
+							mc.nokk, 
+							mc.emergencyname, 
+							mc.emergencycontact, 
+							mc.last_salary
+						FROM 
+							trx_loan la
+						INNER JOIN 
+							mst_customer mc ON la.customer_id = mc.id
+						WHERE
+							la.id = $1
+						ORDER BY la.id`
 
-	loan := &model.LoanApplicationModel{}
+	loan := &model.LoanApplicationJoinModel{}
 	err := r.db.QueryRow(selectStatement, id).Scan(
-		&loan.Id, &loan.CustomerId, &loan.LoanDate, &loan.DueDate, &loan.CategoryLoanId,
+		&loan.Id, &loan.CustomerId, &loan.LoanDate, &loan.DueDate, &loan.CategoryLoanID,
 		&loan.Amount, &loan.Description, &loan.Status, &loan.CreatedAt, &loan.UpdatedAt,
+		&loan.FullName, &loan.Address, &loan.NIK, &loan.PhoneNumber, &loan.NoKK, &loan.EmergencyName,
+		&loan.EmergencyContact, &loan.LastSalary,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
