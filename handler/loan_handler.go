@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -61,19 +62,35 @@ func (lh *LoanHandler) createLoanApplication(ctx *gin.Context) {
 	}
 }
 
-func (lh *LoanHandler) getAllLoanApplications(ctx *gin.Context) {
-	loanApplications, err := lh.usecase.GetAllLoanApplications()
+func (lh *LoanHandler) getLoanApplications(ctx *gin.Context) {
+	page, err := strconv.Atoi(ctx.Query("page"))
 	if err != nil {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(ctx.Query("limit"))
+	if err != nil {
+		limit = 10
+	}
+
+	loanApplications, err := lh.usecase.GetLoanApplications(page, limit)
+	if err != nil {
+		log.Println("Failed to create loan application:", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"success":      false,
-			"errorMessage": "Failed to get loan applications",
+			"errorMessage": "Failed to retrieve loan applications",
 		})
 		return
 	}
 
+	response := make([]model.LoanApplicationJoinModel, 0)
+	for _, loanApplication := range loanApplications {
+		response = append(response, *loanApplication)
+	}
+
 	ctx.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data":    loanApplications,
+		"data":    response,
 	})
 }
 
@@ -83,7 +100,7 @@ func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUse
 		usecase: usecase,
 	}
 	r.POST("/loan", handler.createLoanApplication)
-	r.GET("/loan", handler.getAllLoanApplications)
+	r.GET("/loan", handler.getLoanApplications)
 	// r.GET("/product/:id", handler.getProductById)
 	// r.PUT("/product/:id", handler.updateProduct)
 	// r.DELETE("/product/:id", handler.deleteProduct)
