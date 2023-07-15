@@ -45,11 +45,17 @@ func (usrRepo *userRepoImpl) GetUserByName(name string) (*model.UserModel, error
 }
 
 func (usrRepo *userRepoImpl) UpadateUser(usr *model.UserModel) error {
-	qryid := utils.UPDATE_USER
-	_, err := usrRepo.db.Exec(qryid, usr.Id, usr.UserName, usr.Email, usr.Password, usr.RolesName, usr.IsActive, usr.PhoneNumber, usr.CreatedAt, usr.UpdatedAt)
-	if err != nil {
-		return fmt.Errorf("error on userRepoImpl.UpdateUser() : %w", err)
+	isActiveValue := 0
+	if usr.IsActive {
+		isActiveValue = 1
 	}
+
+	qryid := "UPDATE mst_user SET user_name = $1, email = $2, password = $3, roles_name = $4, is_active = $5, phone_number = $6, created_at = $7, updated_at = $8 WHERE id = $9"
+	_, err := usrRepo.db.Exec(qryid, usr.UserName, usr.Email, usr.Password, usr.RolesName, isActiveValue, usr.PhoneNumber, usr.CreatedAt, usr.UpdatedAt, usr.Id)
+	if err != nil {
+		return fmt.Errorf("error on userRepoImpl.UpdateUser(): %w", err)
+	}
+
 	return nil
 }
 
@@ -60,12 +66,13 @@ func (usrRepo *userRepoImpl) GetUserById(id int) (*model.UserModel, error) {
 	err := usrRepo.db.QueryRow(qry, id).Scan(&usr.Id, &usr.UserName, &usr.Email, &usr.Password, &usr.RolesName, &usr.IsActive, &usr.PhoneNumber, &usr.CreatedAt, &usr.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil
+			return nil, fmt.Errorf("Data pengguna dengan ID %d tidak ditemukan", id)
 		}
-		return nil, fmt.Errorf("error on userRepoImpl.getuserById() : %w", err)
+		return nil, fmt.Errorf("error on userRepoImpl.GetUserById(): %w", err)
 	}
 	return usr, nil
 }
+
 func (usrRepo *userRepoImpl) GetAllUser() (*[]model.UserModel, error) {
 	qry := utils.GET_ALL_USER
 

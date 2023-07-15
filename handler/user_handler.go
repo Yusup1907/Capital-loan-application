@@ -88,6 +88,10 @@ func (usrHandler *UserHandler) UpadteUser(ctx *gin.Context) {
 		})
 		return
 	}
+	// Mengisi nilai createdAt dan updatedAt
+	now := time.Now()
+	usr.CreatedAt = &now
+	usr.UpdatedAt = &now
 
 	err = usrHandler.usrUsecase.UpadateUser(usr)
 	if err != nil {
