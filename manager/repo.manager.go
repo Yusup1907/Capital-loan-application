@@ -6,6 +6,8 @@ import (
 )
 
 type RepoManager interface {
+	GetUserRepo() repository.UserRepo
+	GetLoginRepo() repository.LoginRepo
 	GetCustomerRepo() repository.CustomerRepo
 	GetProductRepo() repository.ProductRepo
 	GetLoanApplicationRepo() repository.LoanApplicationRepo
@@ -16,6 +18,8 @@ type RepoManager interface {
 
 type repoManager struct {
 	infraManager     InfraManager
+	userRepo         repository.UserRepo
+	loginRepo        repository.LoginRepo
 	cstRepo          repository.CustomerRepo
 	productRepo      repository.ProductRepo
 	loan             repository.LoanApplicationRepo
@@ -23,12 +27,28 @@ type repoManager struct {
 	CategoryProduct  repository.CategoryProductRepo
 	TrxGoods         repository.GoodsRepo
 
+	onceLoadUserRepo            sync.Once
+	onceLoadLoginRepo           sync.Once
 	onceLoadCustomerRepo        sync.Once
 	onceLoadCategoryProductRepo sync.Once
 	onceLoadGoodsRepo           sync.Once
 	onceLoadProductRepo         sync.Once
 	onceLoadLoanAppRepo         sync.Once
 	onceLoadRepo                sync.Once
+}
+
+func (rm *repoManager) GetUserRepo() repository.UserRepo {
+	rm.onceLoadUserRepo.Do(func() {
+		rm.userRepo = repository.NewUserRepo(rm.infraManager.GetDB())
+	})
+	return rm.userRepo
+}
+func (rm *repoManager) GetLoginRepo() repository.LoginRepo {
+	rm.onceLoadLoginRepo.Do(func() {
+		rm.loginRepo = repository.NewLoginRepo(rm.infraManager.GetDB())
+	})
+	return rm.loginRepo
+
 }
 
 func (rm *repoManager) GetCustomerRepo() repository.CustomerRepo {
@@ -39,11 +59,12 @@ func (rm *repoManager) GetCustomerRepo() repository.CustomerRepo {
 }
 
 func (rm *repoManager) GetCategoryLoanRepo() repository.CategoryLoanRepo {
-	rm.onceLoadRepo.Do(func() {
+	rm.onceLoadCategoryLoan.Do(func() {
 		rm.categoryLoanRepo = repository.NewCategoryLoanRepo(rm.infraManager.GetDB())
 	})
 	return rm.categoryLoanRepo
 }
+
 func (rm *repoManager) GetProductRepo() repository.ProductRepo {
 	rm.onceLoadProductRepo.Do(func() {
 		rm.productRepo = repository.NewProductRepo(rm.infraManager.GetDB())

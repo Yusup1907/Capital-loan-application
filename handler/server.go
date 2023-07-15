@@ -2,6 +2,7 @@ package handler
 
 import (
 	"pinjam-modal-app/manager"
+	"pinjam-modal-app/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,10 +13,12 @@ type Server interface {
 
 type server struct {
 	usecaseManager manager.UsecaseManager
-	engine         *gin.Engine
+	srv            *gin.Engine
 }
 
 func (s *server) Run() {
+	NewUserHandler(s.engine, s.usecaseManager.GetUserUsecase())
+	NewLoginHandler(s.engine, s.usecaseManager.GetLoginUsecase())
 	NewCustomerHandler(s.engine, s.usecaseManager.GetCustomerUsecase())
 	NewProductHandler(s.engine, s.usecaseManager.GetProductUsecase())
 	NewCategoryProductHandler(s.engine, s.usecaseManager.GetCategoryProductUsecase())
@@ -23,7 +26,9 @@ func (s *server) Run() {
 	NewCategoryLoanHandler(s.engine, s.usecaseManager.GetCategoryLoanUsecase())
 	NewLoanApplicationHandler(s.engine, s.usecaseManager.GetLoanAppUsecase())
 
-	s.engine.Run()
+	s.engine.Use(middleware.LoggerMiddleware())
+
+	s.srv.Run()
 }
 
 func NewServer() Server {
@@ -35,7 +40,6 @@ func NewServer() Server {
 
 	return &server{
 		usecaseManager: usecase,
-		engine:         engine,
+		srv:            engine,
 	}
-
 }
