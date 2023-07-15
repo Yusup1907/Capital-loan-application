@@ -10,7 +10,7 @@ import (
 
 type ProductUsecase interface {
 	CreateProduct(product *model.ProductModel) error
-	GetAllProduct() ([]*model.ProductModel, error)
+	GetAllProduct(page, limit int) ([]*model.ProductModel, error)
 	GetProductById(id int) (*model.ProductModel, error)
 	UpdateProduct(id int, updateProduct *model.ProductModel) error
 	DeleteProduct(id int) error
@@ -40,8 +40,11 @@ func (p *productUsecase) CreateProduct(product *model.ProductModel) error {
 	return p.repo.CreateProduct(product)
 }
 
-func (p *productUsecase) GetAllProduct() ([]*model.ProductModel, error) {
-	return p.repo.GetAllProduct()
+func (p *productUsecase) GetAllProduct(page, limit int) ([]*model.ProductModel, error) {
+	page = 1
+	limit = 10
+
+	return p.repo.GetAllProduct(page, limit)
 }
 
 func (p *productUsecase) GetProductById(id int) (*model.ProductModel, error) {
