@@ -13,7 +13,7 @@ type Server interface {
 
 type server struct {
 	usecaseManager manager.UsecaseManager
-	srv            *gin.Engine
+	engine         *gin.Engine
 }
 
 func (s *server) Run() {
@@ -28,7 +28,7 @@ func (s *server) Run() {
 
 	s.engine.Use(middleware.LoggerMiddleware())
 
-	s.srv.Run()
+	s.engine.Run()
 }
 
 func NewServer() Server {
@@ -40,6 +40,6 @@ func NewServer() Server {
 
 	return &server{
 		usecaseManager: usecase,
-		srv:            engine,
+		engine:         engine,
 	}
 }

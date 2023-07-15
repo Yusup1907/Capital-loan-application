@@ -26,25 +26,26 @@ type repoManager struct {
 	categoryLoanRepo repository.CategoryLoanRepo
 	CategoryProduct  repository.CategoryProductRepo
 	TrxGoods         repository.GoodsRepo
-
-	onceLoadUserRepo            sync.Once
-	onceLoadLoginRepo           sync.Once
-	onceLoadCustomerRepo        sync.Once
-	onceLoadCategoryProductRepo sync.Once
-	onceLoadGoodsRepo           sync.Once
-	onceLoadProductRepo         sync.Once
-	onceLoadLoanAppRepo         sync.Once
-	onceLoadRepo                sync.Once
 }
 
+var onceLoadUserRepo sync.Once
+var onceLoadLoginRepo sync.Once
+var onceLoadCustomerRepo sync.Once
+var onceLoadCategoryLoan sync.Once
+var onceLoadCategoryProductRepo sync.Once
+var onceLoadGoodsRepo sync.Once
+var onceLoadProductRepo sync.Once
+var onceLoadLoanAppRepo sync.Once
+var onceLoadRepo sync.Once
+
 func (rm *repoManager) GetUserRepo() repository.UserRepo {
-	rm.onceLoadUserRepo.Do(func() {
+	onceLoadUserRepo.Do(func() {
 		rm.userRepo = repository.NewUserRepo(rm.infraManager.GetDB())
 	})
 	return rm.userRepo
 }
 func (rm *repoManager) GetLoginRepo() repository.LoginRepo {
-	rm.onceLoadLoginRepo.Do(func() {
+	onceLoadLoginRepo.Do(func() {
 		rm.loginRepo = repository.NewLoginRepo(rm.infraManager.GetDB())
 	})
 	return rm.loginRepo
@@ -52,41 +53,41 @@ func (rm *repoManager) GetLoginRepo() repository.LoginRepo {
 }
 
 func (rm *repoManager) GetCustomerRepo() repository.CustomerRepo {
-	rm.onceLoadCustomerRepo.Do(func() {
+	onceLoadCustomerRepo.Do(func() {
 		rm.cstRepo = repository.NewCustomerRepo(rm.infraManager.GetDB())
 	})
 	return rm.cstRepo
 }
 
 func (rm *repoManager) GetCategoryLoanRepo() repository.CategoryLoanRepo {
-	rm.onceLoadCategoryLoan.Do(func() {
+	onceLoadCategoryLoan.Do(func() {
 		rm.categoryLoanRepo = repository.NewCategoryLoanRepo(rm.infraManager.GetDB())
 	})
 	return rm.categoryLoanRepo
 }
 
 func (rm *repoManager) GetProductRepo() repository.ProductRepo {
-	rm.onceLoadProductRepo.Do(func() {
+	onceLoadProductRepo.Do(func() {
 		rm.productRepo = repository.NewProductRepo(rm.infraManager.GetDB())
 	})
 	return rm.productRepo
 }
 
 func (rm *repoManager) GetLoanApplicationRepo() repository.LoanApplicationRepo {
-	rm.onceLoadLoanAppRepo.Do(func() {
+	onceLoadLoanAppRepo.Do(func() {
 		rm.loan = repository.NewLoanApplicationRepository(rm.infraManager.GetDB())
 	})
 	return rm.loan
 }
 func (rm *repoManager) GetCategoryProductRepo() repository.CategoryProductRepo {
-	rm.onceLoadCategoryProductRepo.Do(func() {
+	onceLoadCategoryProductRepo.Do(func() {
 		rm.CategoryProduct = repository.NewCategoryProductRepo(rm.infraManager.GetDB())
 	})
 	return rm.CategoryProduct
 }
 
 func (rm *repoManager) GetGoodsRepo() repository.GoodsRepo {
-	rm.onceLoadGoodsRepo.Do(func() {
+	onceLoadGoodsRepo.Do(func() {
 		rm.TrxGoods = repository.NewGoodsRepo(rm.infraManager.GetDB())
 	})
 	return rm.TrxGoods

@@ -38,14 +38,14 @@ func (usrUsecase *userUsecaseImpl) GetUserByName(name string) (*model.UserModel,
 func (usrUseCase *userUsecaseImpl) InsertUser(usr *model.UserModel) error {
 	if usr.UserName == "" {
 		return apperror.AppError{
-			Code:    1,
-			Message: "Name cannot be empty",
+			ErrorCode:    1,
+			ErrorMessage: "Name cannot be empty",
 		}
 	}
 	if usr.Password == "" {
 		return apperror.AppError{
-			Code:    1,
-			Message: "Password cannot be empty",
+			ErrorCode:    1,
+			ErrorMessage: "Password cannot be empty",
 		}
 	}
 
@@ -55,8 +55,8 @@ func (usrUseCase *userUsecaseImpl) InsertUser(usr *model.UserModel) error {
 	}
 	if existData != nil {
 		return apperror.AppError{
-			Code:    1,
-			Message: fmt.Sprintf("User data with the name %v already exists", usr.UserName),
+			ErrorCode:    1,
+			ErrorMessage: fmt.Sprintf("User data with the name %v already exists", usr.UserName),
 		}
 	}
 
@@ -73,14 +73,14 @@ func (usrUseCase *userUsecaseImpl) InsertUser(usr *model.UserModel) error {
 func (usrUseCase *userUsecaseImpl) UpadateUser(usr *model.UserModel) error {
 	if usr.UserName == "" {
 		return apperror.AppError{
-			Code:    1,
-			Message: "Name cannot be empty",
+			ErrorCode:    1,
+			ErrorMessage: "Name cannot be empty",
 		}
 	}
 	if usr.Password == "" {
 		return apperror.AppError{
-			Code:    1,
-			Message: "Password cannot be empty",
+			ErrorCode:    1,
+			ErrorMessage: "Password cannot be empty",
 		}
 	}
 
@@ -90,8 +90,8 @@ func (usrUseCase *userUsecaseImpl) UpadateUser(usr *model.UserModel) error {
 	}
 	if existData == nil {
 		return apperror.AppError{
-			Code:    1,
-			Message: fmt.Sprintf("User data with the ID %v does not exist", usr.Id),
+			ErrorCode:    1,
+			ErrorMessage: fmt.Sprintf("User data with the ID %v does not exist", usr.Id),
 		}
 	}
 
@@ -101,8 +101,8 @@ func (usrUseCase *userUsecaseImpl) UpadateUser(usr *model.UserModel) error {
 	}
 	if existDataUsr != nil && existDataUsr.Id != usr.Id {
 		return apperror.AppError{
-			Code:    1,
-			Message: fmt.Sprintf("User data with the username %v already exists", usr.UserName),
+			ErrorCode:    1,
+			ErrorMessage: fmt.Sprintf("User data with the username %v already exists", usr.UserName),
 		}
 	}
 
