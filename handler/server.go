@@ -22,7 +22,7 @@ func (s *server) Run() {
 	NewGoodsHandler(s.engine, s.usecaseManager.GetGoodsUsecase())
 	NewCategoryLoanHandler(s.engine, s.usecaseManager.GetCategoryLoanUsecase())
 
-	s.engine.Run()
+	s.engine.Run(":8080")
 }
 
 func NewServer() Server {

@@ -24,7 +24,7 @@ type usecaseManager struct {
 
 
 
-	onceLoadUsecase        sync.Once
+	onceLoadUsecase        		sync.Once
 	onceLoadCustomerUsecase        sync.Once
 	onceLoadGetCategoryProductUsecase sync.Once
 	onceLoadGetGoodsUsecase sync.Once
