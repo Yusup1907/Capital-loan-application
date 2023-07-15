@@ -14,6 +14,7 @@ type LoanApplicationUsecase interface {
 	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
 	LoanRepayment(id int, repayment *model.LoanRepaymentModel) error
 	GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error)
+	GenerateIncomeReport(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, float64, error)
 }
 
 type loanApplicationUsecase struct {
@@ -99,6 +100,20 @@ func (uc *loanApplicationUsecase) GetLoanApplicationRepaymentStatus(page, limit 
 	}
 
 	return uc.repo.GetLoanApplicationRepaymentStatus(page, limit, repaymentStatus)
+}
+
+func (uc *loanApplicationUsecase) GenerateIncomeReport(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, float64, error) {
+	loanRepayments, err := uc.repo.GetLoanRepaymentsByDateRange(startDate, endDate)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to retrieve loan repayments: %w", err)
+	}
+
+	totalIncome := 0.0
+	for _, repayment := range loanRepayments {
+		totalIncome += repayment.Payment
+	}
+
+	return loanRepayments, totalIncome, nil
 }
 
 func NewLoanApplicationUseCase(repo repository.LoanApplicationRepo) LoanApplicationUsecase {

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"pinjam-modal-app/model"
+	"time"
 )
 
 type LoanApplicationRepo interface {
@@ -12,8 +13,8 @@ type LoanApplicationRepo interface {
 	GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error)
 	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
 	LoanRepayment(id int, repayment *model.LoanRepaymentModel) error
-	UpdateRepaymentStatus(id int, status string) error
 	GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error)
+	GetLoanRepaymentsByDateRange(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, error)
 }
 
 type loanApplicationRepo struct {
@@ -195,7 +196,6 @@ func (r *loanApplicationRepo) GetLoanApplicationRepaymentStatus(page, limit int,
 	return applications, nil
 }
 
-
 func (r *loanApplicationRepo) LoanRepayment(id int, repayment *model.LoanRepaymentModel) error {
 	updateStatment := "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3::loan_status, updated_at = $4 WHERE id = $5"
 	_, err := r.db.Exec(updateStatment, repayment.PaymentDate, repayment.Payment, model.StatusEnum(repayment.RepaymentStatus), repayment.UpdatedAt, id)
@@ -205,13 +205,34 @@ func (r *loanApplicationRepo) LoanRepayment(id int, repayment *model.LoanRepayme
 	return nil
 }
 
-func (r *loanApplicationRepo) UpdateRepaymentStatus(id int, status string) error {
-	updateStatement := "UPDATE trx_loan SET repayment_status = $1 WHERE id = $2"
-	_, err := r.db.Exec(updateStatement, status, id)
+func (r *loanApplicationRepo) GetLoanRepaymentsByDateRange(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, error) {
+	selectStatement := `
+		SELECT payment_date, payment
+		FROM trx_loan
+		WHERE payment_date >= $1 AND payment_date <= $2
+	`
+
+	rows, err := r.db.Query(selectStatement, startDate, endDate)
 	if err != nil {
-		return fmt.Errorf("failed to update repayment status: %w", err)
+		return nil, fmt.Errorf("error querying loan repayments: %w", err)
 	}
-	return nil
+	defer rows.Close()
+
+	loanRepayments := []*model.LoanRepaymentModel{}
+	for rows.Next() {
+		loanRepayment := &model.LoanRepaymentModel{}
+		err := rows.Scan(&loanRepayment.PaymentDate, &loanRepayment.Payment)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning loan repayment: %w", err)
+		}
+		loanRepayments = append(loanRepayments, loanRepayment)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error retrieving loan repayments: %w", err)
+	}
+
+	return loanRepayments, nil
 }
 
 func NewLoanApplicationRepository(db *sql.DB) LoanApplicationRepo {
