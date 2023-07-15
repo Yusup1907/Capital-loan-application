@@ -209,6 +209,7 @@ func (cstHandler customerHandlerImpl) DeleteCustomer(ctx *gin.Context) {
 
 func NewCustomerHandler(router  *gin.Engine, cstUsecase usecase.CustomerUsecase) CustomerHandler {
 	cstHandler := &customerHandlerImpl{
+		router: router,
 		cstUsecase: cstUsecase,
 	}
 	router.POST("/Customer", cstHandler.AddCustomer)
