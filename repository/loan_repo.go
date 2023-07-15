@@ -13,6 +13,7 @@ type LoanApplicationRepo interface {
 	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
 	LoanRepayment(id int, repayment *model.LoanRepaymentModel) error
 	UpdateRepaymentStatus(id int, status string) error
+	GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error)
 }
 
 type loanApplicationRepo struct {
@@ -134,6 +135,66 @@ func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplica
 
 	return loan, nil
 }
+
+func (r *loanApplicationRepo) GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error) {
+	offset := (page - 1) * limit
+
+	selectStatement := `
+				SELECT 
+					la.id, 
+					la.customer_id, 
+					la.loan_date, 
+					la.due_date, 
+					la.category_loan_id, 
+					la.amount, 
+					la.description, 
+					la.status, 
+					la.repayment_status, 
+					la.created_at, 
+					la.updated_at,
+			   		mc.full_name, 
+					mc.address, 
+					mc.nik, 
+					mc.phone_number, 
+					mc.nokk, 
+					mc.emergencyname, 
+					mc.emergencycontact, 
+					mc.last_salary
+				FROM 
+					trx_loan la
+				INNER JOIN mst_customer mc ON la.customer_id = mc.id
+				WHERE la.repayment_status = $3
+				ORDER BY la.id ASC
+				OFFSET $1 LIMIT $2`
+
+	rows, err := r.db.Query(selectStatement, offset, limit, repaymentStatus)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get loan applications: %w", err)
+	}
+	defer rows.Close()
+
+	applications := []*model.LoanApplicationJoinModel{}
+	for rows.Next() {
+		application := &model.LoanApplicationJoinModel{}
+		err := rows.Scan(
+			&application.Id, &application.CustomerId, &application.LoanDate, &application.DueDate, &application.CategoryLoanID,
+			&application.Amount, &application.Description, &application.Status, &application.RepaymentStatus, &application.CreatedAt, &application.UpdatedAt,
+			&application.FullName, &application.Address, &application.NIK, &application.PhoneNumber, &application.NoKK, &application.EmergencyName,
+			&application.EmergencyContact, &application.LastSalary,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan loan application: %w", err)
+		}
+		applications = append(applications, application)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to get loan applications: %w", err)
+	}
+
+	return applications, nil
+}
+
 
 func (r *loanApplicationRepo) LoanRepayment(id int, repayment *model.LoanRepaymentModel) error {
 	updateStatment := "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3::loan_status, updated_at = $4 WHERE id = $5"

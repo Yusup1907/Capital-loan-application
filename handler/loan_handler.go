@@ -167,6 +167,48 @@ func (lh *LoanHandler) loanRepayment(ctx *gin.Context) {
 	})
 }
 
+func (lh *LoanHandler) getLoanApplicationsByRepaymentStatus(ctx *gin.Context) {
+	pageStr := ctx.Query("page")
+	limitStr := ctx.Query("limit")
+	repaymentStatusStr := ctx.Query("repayment_status")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page value"})
+		return
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit value"})
+		return
+	}
+
+	var repaymentStatus model.StatusEnum
+	if repaymentStatusStr == "lunas" {
+		repaymentStatus = model.RepaymentStatusLunas
+	} else if repaymentStatusStr == "belum lunas" {
+		repaymentStatus = model.RepaymentStatusBelumLunas
+	} else {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repayment status value"})
+		return
+	}
+
+	lunasApplications, err := lh.usecase.GetLoanApplicationRepaymentStatus(page, limit, repaymentStatus)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": fmt.Sprintf("Failed to get loan applications: %v", err),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    lunasApplications,
+	})
+}
+
 func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUsecase) *LoanHandler {
 	handler := LoanHandler{
 		router:  r,
@@ -176,7 +218,7 @@ func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUse
 	r.GET("/loan", handler.getLoanApplications)
 	r.GET("/loan/:id", handler.getLoanApplicationById)
 	r.PUT("/loan/:id", handler.loanRepayment)
-	// r.DELETE("/product/:id", handler.deleteProduct)
+	r.GET("/loan-application", handler.getLoanApplicationsByRepaymentStatus)
 
 	return &handler
 }

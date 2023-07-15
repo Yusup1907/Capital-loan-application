@@ -13,6 +13,7 @@ type LoanApplicationUsecase interface {
 	GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error)
 	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
 	LoanRepayment(id int, repayment *model.LoanRepaymentModel) error
+	GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error)
 }
 
 type loanApplicationUsecase struct {
@@ -87,6 +88,17 @@ func (uc *loanApplicationUsecase) LoanRepayment(id int, repayment *model.LoanRep
 	}
 
 	return nil
+}
+
+func (uc *loanApplicationUsecase) GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	return uc.repo.GetLoanApplicationRepaymentStatus(page, limit, repaymentStatus)
 }
 
 func NewLoanApplicationUseCase(repo repository.LoanApplicationRepo) LoanApplicationUsecase {
