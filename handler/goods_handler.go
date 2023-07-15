@@ -1,12 +1,17 @@
+
+
 package handler
 
 import (
 	// "fmt"
 	"fmt"
+	"log"
 	"net/http"
+	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,16 +44,15 @@ func (goodsHandler *goodsHandlerImpl) InsertGoods(ctx *gin.Context) {
 		})
 		return
 	}
-
 	if goods.Status == "APPROVE" {
 		ctx.JSON(http.StatusOK, gin.H{
-			"status": "APPROVE",
-			"message": "TrxGoods inserted successfully",
+			"status":  model.LoanStatusApprove,
+			"message": "Loan application created successfully",
 		})
 	} else {
 		ctx.JSON(http.StatusOK, gin.H{
-			"status": "DENIED",
-			"message": "TrxGoods failed to insert",
+			"status":  model.LoanStatusDenied,
+			"message": "Failed to create loan application",
 		})
 	}
 
@@ -89,12 +93,91 @@ func (goodsHandler *goodsHandlerImpl) GetGoodsById(ctx *gin.Context) {
 	})
 }
 
-func NewGoodsHandler(router *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHandler {
+func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
+		page, err := strconv.Atoi(ctx.Query("page"))
+		if err != nil {
+			page = 1
+		}
+	
+		limit, err := strconv.Atoi(ctx.Query("limit"))
+		if err != nil {
+			limit = 10
+		}
+	
+		loanGoods, err := goodsHandler.goodsUsecase.GetAllTrxGoods(page, limit)
+		if err != nil {
+			log.Println("Failed to create loan application:", err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": "Failed to retrieve loan applications",
+			})
+			return
+		}
+	
+		response := make([]model.LoanGoodsModel, 0)
+		for _, loanGood := range loanGoods {
+			response = append(response, *loanGood)
+		}
+	
+		ctx.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"data":    response,
+		})
+	}
+
+	func (goodsHandler *goodsHandlerImpl) GoodsRepayment(ctx *gin.Context) {
+		goodsID := ctx.Param("id")
+		if goodsID == "" {
+			errResponse := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
+			ctx.JSON(http.StatusBadRequest, errResponse)
+			return
+		}
+	
+		id, err := strconv.Atoi(goodsID)
+		if err != nil {
+			errResponse := apperror.NewAppError(http.StatusBadRequest, "ID must be a number")
+			ctx.JSON(http.StatusBadRequest, errResponse)
+			return
+		}
+	
+		var req model.LoanRepaymentRequest
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			errResponse := apperror.NewAppError(http.StatusBadRequest, "Invalid JSON data")
+			ctx.JSON(http.StatusBadRequest, errResponse)
+			return
+		}
+	
+		repaymentGoods := &model.LoanRepaymentModel{
+			PaymentDate: req.PaymentDate,
+			Payment:     req.Payment,
+			UpdatedAt:   time.Now(),
+		}
+	
+		err = goodsHandler.goodsUsecase.GoodsRepayment(id, repaymentGoods)
+		if err != nil {
+			log.Println("Failed to process loan repayment:", err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": fmt.Sprintf("Failed to process loan repayment: %v", err),
+			})
+			return
+		}
+	
+		ctx.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "Loan repayment processed successfully",
+		})
+	}
+	
+func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHandler {
 	ghandler := goodsHandlerImpl{
+		router: srv,
 		goodsUsecase: goodsUsecase,
 	}
 
-	router.POST("/goods", ghandler.InsertGoods)
-	router.GET("/goods/:id", ghandler.GetGoodsById)
+	srv.POST("/goods", ghandler.InsertGoods)
+	srv.GET("/goods/:id", ghandler.GetGoodsById)
+	srv.GET("/goods", ghandler.GetAllTrxGoods)
+	srv.PUT("/goods/:id", ghandler.GoodsRepayment)
 	return ghandler
 }

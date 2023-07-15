@@ -192,6 +192,7 @@ func (cpHandler *categoryProductHandler) DeleteCategoryProduct(ctx *gin.Context)
 
 func NewCategoryProductHandler(router *gin.Engine, cpUsecase usecase.CategoryProductUsecase) CategoryProductHandler {
 	handler := &categoryProductHandler{
+		router: router,
 		cpUsecase: cpUsecase,
 	}
 
