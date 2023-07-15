@@ -45,10 +45,3 @@ type LoanGoodsModel struct{
 		LastSalary       float64    `json:"last_salary"`
 }
 
-type StatusEnum string
-
-const (
-	RepaymentStatusLunas      StatusEnum = "lunas"
-	RepaymentStatusBelumLunas StatusEnum = "belum lunas"
-)
-

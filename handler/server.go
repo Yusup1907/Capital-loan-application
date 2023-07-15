@@ -21,6 +21,7 @@ func (s *server) Run() {
 	NewCategoryProductHandler(s.engine, s.usecaseManager.GetCategoryProductUsecase())
 	NewGoodsHandler(s.engine, s.usecaseManager.GetGoodsUsecase())
 	NewCategoryLoanHandler(s.engine, s.usecaseManager.GetCategoryLoanUsecase())
+	NewLoanApplicationHandler(s.engine, s.usecaseManager.GetLoanAppUsecase())
 
 	s.engine.Run(":8080")
 }

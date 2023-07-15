@@ -1,58 +1,105 @@
 package usecase
 
 import (
+	"fmt"
+	"log"
+	"pinjam-modal-app/model"
 	"pinjam-modal-app/repository"
+	"time"
 )
 
 type LoanApplicationUsecase interface {
+	CreateLoanApplication(application *model.LoanApplicationModel) error
+	GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error)
+	GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error)
+	LoanRepayment(id int, repayment *model.LoanRepaymentModel) error
+	GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error)
 }
 
 type loanApplicationUsecase struct {
 	repo repository.LoanApplicationRepo
 }
 
-// func (uc *loanApplicationUsecase) CreateLoanApplication(application *model.LoanApplicationModel) error {
-// 	if err := application.Validate(); err != nil {
-// 		return err
-// 	}
+func (uc *loanApplicationUsecase) CreateLoanApplication(application *model.LoanApplicationModel) error {
 
-// 	percentage := calculateDataPercentage(application)
-// 	if percentage == 100 {
-// 		application.Status = "approve"
-// 	} else if percentage >= 60 {
-// 		application.Status = "pending"
-// 	} else {
-// 		application.Status = "denied"
-// 	}
+	customerDB, err := uc.repo.GetCustomerById(application.CustomerId)
+	if err != nil {
+		return fmt.Errorf("error: %v", err)
+	}
 
-// 	if err := uc.loanRepo.CreateLoanApplication(application); err != nil {
-// 		return err
-// 	}
+	if customerDB.NIK.Valid && customerDB.NIK.String != "" &&
+		customerDB.NoKK.Valid && customerDB.NoKK.String != "" &&
+		customerDB.EmergencyName.Valid && customerDB.EmergencyName.String != "" &&
+		customerDB.EmergencyContact.Valid && customerDB.EmergencyContact.String != "" &&
+		customerDB.LastSalary.Valid && customerDB.LastSalary.Float64 != 0 {
+		application.Status = model.LoanStatusApprove
+		application.RepaymentStatus = model.StatusEnum(model.RepaymentStatusBelumLunas)
+		application.DueDate = time.Now().AddDate(0, 2, 0)
+	} else {
+		application.Status = model.LoanStatusDenied
+		fmt.Println("Silakan lengkapi data customer")
+	}
 
-// 	return nil
-// }
+	err = uc.repo.CreateLoanApplication(application)
+	if err != nil {
+		return fmt.Errorf("failed to insert loan: %v", err)
+	}
 
-// func calculateDataPercentage(customer *model.CustomerModel) float64 {
-// 	requiredFields := []interface{}{
-// 		customer.NIK,
-// 		customer.NoKK,
-// 		customer.EmergencyName,
-// 		customer.EmergencyContact,
-// 		customer.LastSalary,
-// 		Address.Amount,
-// 	}
+	return nil
+}
 
-// 	totalFields := len(requiredFields)
-// 	filledFields := 0
+func (uc *loanApplicationUsecase) GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
 
-// 	for _, field := range requiredFields {
-// 		if field != nil {
-// 			filledFields++
-// 		}
-// 	}
+	return uc.repo.GetLoanApplications(page, limit)
+}
 
-// 	return float64(filledFields) / float64(totalFields) * 100
-// }
+func (uc *loanApplicationUsecase) GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error) {
+	return uc.repo.GetLoanApplicationById(id)
+}
+
+func (uc *loanApplicationUsecase) LoanRepayment(id int, repayment *model.LoanRepaymentModel) error {
+	loan, err := uc.repo.GetLoanApplicationById(id)
+	if err != nil {
+		return fmt.Errorf("failed to get loan application: %w", err)
+	}
+
+	if repayment.Payment < loan.Amount {
+		log.Printf("Payment amount: %v, Loan amount: %v", repayment.Payment, loan.Amount)
+		return fmt.Errorf("payment amount is less than the loan amount")
+	}
+
+	if repayment.Payment == loan.Amount {
+		repayment.RepaymentStatus = model.RepaymentStatusLunas
+	}
+
+	if repayment.PaymentDate.Before(loan.DueDate) {
+		return fmt.Errorf("payment date must be on or after due date")
+	}
+
+	err = uc.repo.LoanRepayment(id, repayment)
+	if err != nil {
+		return fmt.Errorf("failed to update loan repayment: %w", err)
+	}
+
+	return nil
+}
+
+func (uc *loanApplicationUsecase) GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error) {
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	return uc.repo.GetLoanApplicationRepaymentStatus(page, limit, repaymentStatus)
+}
 
 func NewLoanApplicationUseCase(repo repository.LoanApplicationRepo) LoanApplicationUsecase {
 	return &loanApplicationUsecase{

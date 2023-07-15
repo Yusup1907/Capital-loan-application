@@ -12,6 +12,7 @@ type GoodsRepo interface {
 	GetGoodsById(int) (*model.LoanGoodsModel, error)
 	GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error)
 	GetCustomerById(int) (*model.ValidasiCustomerModel, error)
+	GoodsRepayment(int, *model.LoanRepaymentModel) error
 }
 
 type goodsRepoImpl struct {
@@ -105,6 +106,15 @@ func (goodsRepo *goodsRepoImpl) GetAllTrxGoods(page, limit int) ([]*model.LoanGo
 				return nil, fmt.Errorf("failed to get loan applications: %w", err)
 			}
 			return loangoods, nil
+}
+
+func (goodsRepo *goodsRepoImpl) GoodsRepayment(id int, repayment *model.LoanRepaymentModel) error {
+	updateStatment := "UPDATE trx_goods SET payment_date = $1, payment = $2, repeyment_status = $3, updated_at = $4 WHERE id = $5"
+	_, err := goodsRepo.db.Exec(updateStatment, repayment.PaymentDate, repayment.Payment, model.StatusEnum(repayment.RepaymentStatus), repayment.UpdatedAt, id)
+	if err != nil {
+		return fmt.Errorf("error on loanApplicationRepo.LoanRepayment() : %w", err)
+	}
+	return nil
 }
 
 

@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -120,6 +122,50 @@ func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
 			"data":    response,
 		})
 	}
+
+	func (goodsHandler *goodsHandlerImpl) GoodsRepayment(ctx *gin.Context) {
+		goodsID := ctx.Param("id")
+		if goodsID == "" {
+			errResponse := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
+			ctx.JSON(http.StatusBadRequest, errResponse)
+			return
+		}
+	
+		id, err := strconv.Atoi(goodsID)
+		if err != nil {
+			errResponse := apperror.NewAppError(http.StatusBadRequest, "ID must be a number")
+			ctx.JSON(http.StatusBadRequest, errResponse)
+			return
+		}
+	
+		var req model.LoanRepaymentRequest
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			errResponse := apperror.NewAppError(http.StatusBadRequest, "Invalid JSON data")
+			ctx.JSON(http.StatusBadRequest, errResponse)
+			return
+		}
+	
+		repaymentGoods := &model.LoanRepaymentModel{
+			PaymentDate: req.PaymentDate,
+			Payment:     req.Payment,
+			UpdatedAt:   time.Now(),
+		}
+	
+		err = goodsHandler.goodsUsecase.GoodsRepayment(id, repaymentGoods)
+		if err != nil {
+			log.Println("Failed to process loan repayment:", err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": fmt.Sprintf("Failed to process loan repayment: %v", err),
+			})
+			return
+		}
+	
+		ctx.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "Loan repayment processed successfully",
+		})
+	}
 	
 func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHandler {
 	ghandler := goodsHandlerImpl{
@@ -130,5 +176,6 @@ func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHan
 	srv.POST("/goods", ghandler.InsertGoods)
 	srv.GET("/goods/:id", ghandler.GetGoodsById)
 	srv.GET("/goods", ghandler.GetAllTrxGoods)
+	srv.PUT("/goods/:id", ghandler.GoodsRepayment)
 	return ghandler
 }

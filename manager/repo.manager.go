@@ -21,7 +21,7 @@ type repoManager struct {
 	loan             repository.LoanApplicationRepo
 	categoryLoanRepo repository.CategoryLoanRepo
 	CategoryProduct  repository.CategoryProductRepo
-	TrxGoods		 repository.GoodsRepo
+	TrxGoods         repository.GoodsRepo
 
 	onceLoadCustomerRepo        sync.Once
 	onceLoadCategoryProductRepo sync.Once
