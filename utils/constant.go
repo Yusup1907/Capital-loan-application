@@ -66,10 +66,60 @@ const (
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`
 	GET_CUSTOMER_LOAN_BY_ID = "SELECT id, nik, nokk, emergencyname, emergencycontact, last_salary FROM mst_customer WHERE id = $1"
 	GET_LOAN_APLICATION     = `SELECT la.id, la.customer_id, la.loan_date, la.due_date, la.category_loan_id, la.amount, la.description, la.status, la.repayment_status, la.created_at, la.updated_at,
-	mc.full_name, mc.address, mc.nik, mc.phone_number, mc.nokk, mc.emergencyname, mc.emergencycontact, mc.last_salary
-FROM trx_loan la
-INNER JOIN mst_customer mc ON la.customer_id = mc.id
-ORDER BY la.id ASC
-OFFSET $1 LIMIT $2
-`
+	mc.full_name, mc.address, mc.nik, mc.phone_number, mc.nokk, mc.emergencyname, mc.emergencycontact, mc.last_salary FROM trx_loan la INNER JOIN mst_customer mc ON la.customer_id = mc.id ORDER BY la.id ASC OFFSET $1 LIMIT $2`
+	GET_LOAN_APLICATION_BY_ID = `SELECT 
+	la.id, 
+	la.customer_id, 
+	la.loan_date, 
+	la.due_date, 
+	la.category_loan_id, 
+	la.amount, 
+	la.description, 
+	la.status,
+	la.repayment_status, 
+	la.created_at, 
+	la.updated_at,
+	mc.full_name, 
+	mc.address, 
+	mc.nik, 
+	mc.phone_number, 
+	mc.nokk, 
+	mc.emergencyname, 
+	mc.emergencycontact, 
+	mc.last_salary
+FROM 
+	trx_loan la
+INNER JOIN 
+	mst_customer mc ON la.customer_id = mc.id
+WHERE
+	la.id = $1
+ORDER BY la.id`
+
+	GET_LOAN_APLCATION_REPAYMENT_STATUS = `SELECT 
+					la.id, 
+					la.customer_id, 
+					la.loan_date, 
+					la.due_date, 
+					la.category_loan_id, 
+					la.amount, 
+					la.description, 
+					la.status, 
+					la.repayment_status, 
+					la.created_at, 
+					la.updated_at,
+			   		mc.full_name, 
+					mc.address, 
+					mc.nik, 
+					mc.phone_number, 
+					mc.nokk, 
+					mc.emergencyname, 
+					mc.emergencycontact, 
+					mc.last_salary
+				FROM 
+					trx_loan la
+				INNER JOIN mst_customer mc ON la.customer_id = mc.id
+				WHERE la.repayment_status = $3
+				ORDER BY la.id ASC
+				OFFSET $1 LIMIT $2`
+	LOAN_REPAYMENT = "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3::loan_status, updated_at = $4 WHERE id = $5"
 )
