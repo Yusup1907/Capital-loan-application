@@ -15,7 +15,7 @@ type CustomerModel struct {
 	FullName         string    `json:"full_name" validate:"required,min=3"`
 	Address          string    `json:"address"`
 	NIK              string    `json:"nik" validate:"required,min=16,max=16"`
-	Phone            string    `json:"phone_number" validate:"required"`
+	Phone            string    `json:"phone" validate:"required"`
 	NoKK             string    `json:"no_kk" validate:"required,min=16,max=16"`
 	EmergencyName    string    `json:"emergency_name" validate:"required"`
 	EmergencyContact string    `json:"emergency_contact" validate:"required"`
