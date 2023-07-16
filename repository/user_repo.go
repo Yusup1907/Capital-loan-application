@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"pinjam-modal-app/model"
+	"sync"
 	"time"
 
 	"pinjam-modal-app/utils"
@@ -16,12 +17,15 @@ type UserRepo interface {
 	GetUserByEmail(email string) (*model.UserModel, error)
 	GetUserByUsernameOrEmail(identifier string) (*model.UserModel, error)
 	GetUserById(int) (*model.UserModel, error)
+	LogoutUser(userId int) error
 	GetAllUser() (*[]model.UserModel, error)
 	UpadateUser(usr *model.UserModel) error
 	DeleteUser(*model.UserModel) error
 }
 type userRepoImpl struct {
-	db *sql.DB
+	db             *sql.DB
+	loggedOutUsers map[int]bool
+	mutex          sync.Mutex
 }
 
 var (
@@ -94,6 +98,15 @@ func (r *userRepoImpl) GetUserByUsernameOrEmail(identifier string) (*model.UserM
 	return user, nil
 }
 
+func (r *userRepoImpl) LogoutUser(userId int) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	// Tandai pengguna sebagai logout
+	r.loggedOutUsers[userId] = true
+	return nil
+}
+
 func (usrRepo *userRepoImpl) UpadateUser(usr *model.UserModel) error {
 	isActiveValue := 0
 	if usr.IsActive {
@@ -161,6 +174,7 @@ func (usrRepo *userRepoImpl) DeleteUser(usr *model.UserModel) error {
 
 func NewUserRepo(db *sql.DB) UserRepo {
 	return &userRepoImpl{
-		db: db,
+		db:             db,
+		loggedOutUsers: make(map[int]bool),
 	}
 }

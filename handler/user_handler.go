@@ -56,6 +56,25 @@ func (h *UserHandler) loginUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+func (h *UserHandler) logoutUser(c *gin.Context) {
+	// Mendapatkan ID pengguna dari path parameter
+	userIDStr := c.Param("id")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	// Melakukan logout pengguna
+	err = h.usrUsecase.LogoutUser(userID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout user"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User logged out"})
+}
+
 // func (usrHandler *UserHandler) UpadteUser(ctx *gin.Context) {
 // 	usr := &model.UserModel{}
 // 	err := ctx.ShouldBindJSON(&usr)
@@ -199,7 +218,7 @@ func NewUserHandler(srv *gin.Engine, usrUsecase usecase.UserUsecase) *UserHandle
 	}
 	srv.POST("/register", usrHandler.registerUser)
 	srv.POST("/login", usrHandler.loginUser)
-	// srv.GET("/user/:name", usrHandler.GetUserByName)
+	srv.POST("/logout", usrHandler.logoutUser)
 	// srv.GET("/user/id/:id", usrHandler.GetUserById)
 	// srv.PUT("/user", usrHandler.UpadteUser)
 	// srv.DELETE("/user/:id", usrHandler.DeleteUser)
