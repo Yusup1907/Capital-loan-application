@@ -1,109 +1,108 @@
 package middleware
 
-import (
-	"errors"
-	"net/http"
-	"strings"
+// import (
+// 	"errors"
+// 	"net/http"
+// 	"strings"
 
-	"pinjam-modal-app/model"
-	"pinjam-modal-app/repository"
-	"pinjam-modal-app/utils/authutil"
+// 	"pinjam-modal-app/model"
+// 	"pinjam-modal-app/repository"
+// 	"pinjam-modal-app/utils/authutil"
 
-	"github.com/dgrijalva/jwt-go"
-	"github.com/gin-gonic/gin"
-)
+// 	"github.com/dgrijalva/jwt-go"
+// 	"github.com/gin-gonic/gin"
+// )
 
-func AuthenticationMiddleware(userRepo repository.UserRepo) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Periksa token dari header Authorization
-		authorizationHeader := c.GetHeader("Authorization")
-		if authorizationHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
+// func AuthenticationMiddleware() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		func AuthenticationMiddleware() gin.HandlerFunc {
+// 			return func(c *gin.Context) {
+// 				// Periksa token dari header Authorization
+// 				authorizationHeader := c.GetHeader("Authorization")
+// 				if authorizationHeader == "" {
+// 					c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 					c.Abort()
+// 					return
+// 				}
 
-		// Misalnya, format header Authorization: Bearer <token>
-		splitToken := strings.Split(authorizationHeader, "Bearer ")
-		if len(splitToken) != 2 {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
+// 				// Misalnya, format header Authorization: Bearer <token>
+// 				splitToken := strings.Split(authorizationHeader, "Bearer ")
+// 				if len(splitToken) != 2 {
+// 					c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 					c.Abort()
+// 					return
+// 				}
 
-		tokenString := splitToken[1]
+// 				tokenString := splitToken[1]
 
-		// Validasi token
-		token, err := validateToken(tokenString)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
+// 				// Validasi token
+// 				token, err := validateToken(tokenString)
+// 				if err != nil {
+// 					c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 					c.Abort()
+// 					return
+// 				}
 
-		// Periksa apakah pengguna telah logout
-		if isTokenLoggedOut(tokenString) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
+// 				// Periksa apakah pengguna telah logout
+// 				if isTokenLoggedOut(tokenString) {
+// 					c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 					c.Abort()
+// 					return
+// 				}
 
-		// Setel data pengguna pada konteks Gin
-		user, err := getUserFromToken(token, userRepo)
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
+// 				// Setel data pengguna pada konteks Gin
+// 				user, err := getUserFromToken(token)
+// 				if err != nil {
+// 					c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 					c.Abort()
+// 					return
+// 				}
 
-		c.Set("user", user)
+// 				c.Set("user", user)
 
-		c.Next()
-	}
-}
+// 				// Periksa izin akses berdasarkan peran pengguna
+// 				if !checkAccess(user.Role, c.Request.URL.Path) {
+// 					c.JSON(http.StatusForbidden, gin.H{"error": "Access forbidden"})
+// 					c.Abort()
+// 					return
+// 				}
 
-func validateToken(tokenString string) (*jwt.Token, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Verifikasi metode tanda tangan token
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, errors.New("Invalid token")
-		}
+// 				c.Next()
+// 			}
+// 		}
 
-		// Kembalikan kunci rahasia yang sama yang digunakan saat pembuatan token
-		return []byte(authutil.TokenKey), nil
-	})
+// 		// Periksa izin akses berdasarkan peran pengguna
+// 		user := c.MustGet("user").(*model.UserModel)
+// 		if !checkAccess(user.Role, c.Request.URL.Path) {
+// 			c.JSON(http.StatusForbidden, gin.H{"error": "Access forbidden"})
+// 			c.Abort()
+// 			return
+// 		}
 
-	if err != nil {
-		return nil, err
-	}
+// 		c.Next()
+// 	}
+// }
 
-	if !token.Valid {
-		return nil, errors.New("Invalid token")
-	}
+// func checkAccess(role string, path string) bool {
+// 	// Implementasi logika untuk memeriksa izin akses berdasarkan peran pengguna
+// 	// Misalnya, Anda dapat menggunakan peta (map) yang memetakan peran pengguna ke rute yang diizinkan
 
-	return token, nil
-}
+// 	roleAccessMap := map[string][]string{
+// 		"admin":   {"/admin", "/users"},
+// 		"manager": {"/products", "/orders"},
+// 		"user":    {"/profile", "/cart"},
+// 	}
 
-func isTokenLoggedOut(tokenString string) bool {
-	// Periksa apakah token telah logout menggunakan repositori LogoutRepo
-	return userRepo.IsTokenLoggedOut(tokenString)
-}
+// 	allowedRoutes, ok := roleAccessMap[role]
+// 	if !ok {
+// 		return false
+// 	}
 
-func getUserFromToken(token *jwt.Token, userRepo repository.UserRepo) (*model.UserModel, error) {
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, errors.New("Invalid token claims")
-	}
+// 	for _, route := range allowedRoutes {
+// 		if route == path {
+// 			return true
+// 		}
+// 	}
 
-	username, ok := claims["username"].(string)
-	if !ok {
-		return nil, errors.New("Invalid username in token claims")
-	}
-
-	user, err := userRepo.GetUserByUsername(username)
-	if err != nil {
-		return nil, errors.New("User not found")
-	}
-
-	return user, nil
-}
+// 	return false
+// }
