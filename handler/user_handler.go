@@ -8,7 +8,6 @@ import (
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,130 +16,70 @@ type UserHandler struct {
 	usrUsecase usecase.UserUsecase
 }
 
-func (usrHandler *UserHandler) InsertUser(ctx *gin.Context) {
-	usr := &model.UserModel{}
-	err := ctx.ShouldBindJSON(&usr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Invalid JSON data",
-		})
-		return
-	}
-	if usr.UserName == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Nama pengguna tidak boleh kosong",
-		})
+func (h *UserHandler) registerUser(c *gin.Context) {
+	// Parsing request body
+	var user model.UserModel
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request body"})
 		return
 	}
 
-	if len(usr.UserName) > 15 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Panjang Nama tidak boleh lebih dari 15 karakter",
-		})
+	// Validasi dan registrasi pengguna
+	if err := h.usrUsecase.RegisterUser(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Mengisi nilai createdAt dan updatedAt
-	now := time.Now()
-	usr.CreatedAt = &now
-	usr.UpdatedAt = &now
-
-	err = usrHandler.usrUsecase.InsertUser(usr)
-	if err != nil {
-		if appErr, ok := err.(*apperror.AppError); ok {
-			fmt.Printf("UserHandler.InsertUser() 1: %v\n", appErr)
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"success":      false,
-				"errorMessage": appErr.Error(), // Menggunakan appErr.Error() untuk mendapatkan pesan error
-			})
-		} else {
-			fmt.Printf("UserHandler.InsertUser() 2: %v\n", err)
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"success":      false,
-				"errorMessage": "Terjadi kesalahan ketika menyimpan data User",
-			})
-		}
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-	})
-}
-func (usrHandler *UserHandler) UpadteUser(ctx *gin.Context) {
-	usr := &model.UserModel{}
-	err := ctx.ShouldBindJSON(&usr)
-	if err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Invalid JSON data",
-		})
-		return
-	}
-
-	if len(usr.UserName) > 15 {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Panjang Nama tidak boleh lebih dari 15 karakter",
-		})
-		return
-	}
-	// Mengisi nilai createdAt dan updatedAt
-	now := time.Now()
-	usr.CreatedAt = &now
-	usr.UpdatedAt = &now
-
-	err = usrHandler.usrUsecase.UpadateUser(usr)
-	if err != nil {
-		if appErr, ok := err.(*apperror.AppError); ok {
-			fmt.Printf("UserHandler.InsertUser() 1: %v\n", appErr)
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"success":      false,
-				"errorMessage": appErr.Error(), // Menggunakan appErr.Error() untuk mendapatkan pesan error
-			})
-		} else {
-			fmt.Printf("UserHandler.InsertUser() 2: %v\n", err)
-			ctx.JSON(http.StatusInternalServerError, gin.H{
-				"success":      false,
-				"errorMessage": "Terjadi kesalahan ketika menyimpan data User",
-			})
-		}
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-	})
+	// Mengembalikan response dengan data pengguna yang terdaftar
+	c.JSON(http.StatusOK, user)
 }
 
-func (usrHandler *UserHandler) GetUserByName(ctx *gin.Context) {
-	name := ctx.Param("name")
-	if name == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success":      false,
-			"errorMessage": "Nama tidak boleh kosong",
-		})
-		return
-	}
+// func (usrHandler *UserHandler) UpadteUser(ctx *gin.Context) {
+// 	usr := &model.UserModel{}
+// 	err := ctx.ShouldBindJSON(&usr)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{
+// 			"success":      false,
+// 			"errorMessage": "Invalid JSON data",
+// 		})
+// 		return
+// 	}
 
-	usr, err := usrHandler.usrUsecase.GetUserByName(name)
-	if err != nil {
-		fmt.Printf("UserHandler.GetUserByName(): %v\n", err)
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"success":      false,
-			"errorMessage": err.Error(),
-		})
-		return
-	}
+// 	if len(usr.UserName) > 15 {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{
+// 			"success":      false,
+// 			"errorMessage": "Panjang Nama tidak boleh lebih dari 15 karakter",
+// 		})
+// 		return
+// 	}
+// 	// Mengisi nilai createdAt dan updatedAt
+// 	now := time.Now()
+// 	usr.CreatedAt = now
+// 	usr.UpdatedAt = now
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data":    usr,
-	})
-}
+// 	err = usrHandler.usrUsecase.UpadateUser(usr)
+// 	if err != nil {
+// 		if appErr, ok := err.(*apperror.AppError); ok {
+// 			fmt.Printf("UserHandler.InsertUser() 1: %v\n", appErr)
+// 			ctx.JSON(http.StatusInternalServerError, gin.H{
+// 				"success":      false,
+// 				"errorMessage": appErr.Error(), // Menggunakan appErr.Error() untuk mendapatkan pesan error
+// 			})
+// 		} else {
+// 			fmt.Printf("UserHandler.InsertUser() 2: %v\n", err)
+// 			ctx.JSON(http.StatusInternalServerError, gin.H{
+// 				"success":      false,
+// 				"errorMessage": "Terjadi kesalahan ketika menyimpan data User",
+// 			})
+// 		}
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, gin.H{
+// 		"success": true,
+// 	})
+// }
+
 func (usrHandler *UserHandler) GetUserById(ctx *gin.Context) {
 	id := ctx.Param("id")
 	if id == "" {
@@ -236,12 +175,12 @@ func NewUserHandler(srv *gin.Engine, usrUsecase usecase.UserUsecase) *UserHandle
 	usrHandler := &UserHandler{
 		usrUsecase: usrUsecase,
 	}
-	srv.POST("/user", usrHandler.InsertUser)
-	srv.GET("/user", usrHandler.GetAllUser)
-	srv.GET("/user/:name", usrHandler.GetUserByName)
-	srv.GET("/user/id/:id", usrHandler.GetUserById)
-	srv.PUT("/user", usrHandler.UpadteUser)
-	srv.DELETE("/user/:id", usrHandler.DeleteUser)
+	srv.POST("/user", usrHandler.registerUser)
+	// srv.GET("/user", usrHandler.GetAllUser)
+	// srv.GET("/user/:name", usrHandler.GetUserByName)
+	// srv.GET("/user/id/:id", usrHandler.GetUserById)
+	// srv.PUT("/user", usrHandler.UpadteUser)
+	// srv.DELETE("/user/:id", usrHandler.DeleteUser)
 
 	return usrHandler
 }

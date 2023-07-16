@@ -1,12 +1,7 @@
 package handler
 
 import (
-	"net/http"
-
-	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
-
-	utils "pinjam-modal-app/utils/authutil"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -18,47 +13,46 @@ type LoginHandler struct {
 	LoginUsecase usecase.LoginUsecase
 }
 
-// Handler untuk route /login
-func (l *LoginHandler) Login(c *gin.Context) {
-	var loginData model.User
-	if err := c.ShouldBindJSON(&loginData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid login data"})
-		return
-	}
+// // Handler untuk route /login
+// func (l *LoginHandler) Login(c *gin.Context) {
+// 	var loginData model.User
+// 	if err := c.ShouldBindJSON(&loginData); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid login data"})
+// 		return
+// 	}
+// 	// Simulasi pengecekan kredensial
+// 	// Ganti dengan logika validasi sesuai kebutuhan Anda
+// 	if loginData.Email == "" || loginData.Password == "" {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email or password"})
+// 		return
+// 	}
 
-	// Simulasi pengecekan kredensial
-	// Ganti dengan logika validasi sesuai kebutuhan Anda
-	if loginData.Email == "" || loginData.Password == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email or password"})
-		return
-	}
+// 	// Memanggil usecase Login
+// 	token, err := utils.GenerateToken(loginData.Email)
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+// 		return
+// 	}
 
-	// Memanggil usecase Login
-	token, err := utils.GenerateToken(loginData.Email)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
-		return
-	}
+// 	c.JSON(http.StatusOK, gin.H{"token": token})
+// }
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
-}
+// func (l *LoginHandler) Logout(c *gin.Context) {
+// 	err := l.LoginUsecase.Logout(c) // Sertakan konteks c saat memanggil Logout
+// 	if err != nil {
+// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 		return
+// 	}
 
-func (l *LoginHandler) Logout(c *gin.Context) {
-	err := l.LoginUsecase.Logout(c) // Sertakan konteks c saat memanggil Logout
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+// 	session := sessions.Default(c)
+// 	session.Clear()
+// 	session.Save()
 
-	session := sessions.Default(c)
-	session.Clear()
-	session.Save()
-
-	c.JSON(http.StatusOK, gin.H{
-		"status":  true,
-		"message": "Logout successful",
-	})
-}
+// 	c.JSON(http.StatusOK, gin.H{
+// 		"status":  true,
+// 		"message": "Logout successful",
+// 	})
+// }
 
 func NewLoginHandler(router *gin.Engine, loginUsecase usecase.LoginUsecase) {
 	// Inisialisasi cookie store
@@ -71,12 +65,12 @@ func NewLoginHandler(router *gin.Engine, loginUsecase usecase.LoginUsecase) {
 	})
 
 	// Inisialisasi handler dengan penggunaan sesi
-	loginHandler := &LoginHandler{
-		LoginUsecase: loginUsecase,
-	}
+	// loginHandler := &LoginHandler{
+	// 	LoginUsecase: loginUsecase,
+	// }
 
-	router.Use(sessions.Sessions("session-name", store))
+	// router.Use(sessions.Sessions("session-name", store))
 
-	router.POST("/login", loginHandler.Login)
-	router.POST("/logout", loginHandler.Logout)
+	// router.POST("/login", loginHandler.Login)
+	// router.POST("/logout", loginHandler.Logout)
 }

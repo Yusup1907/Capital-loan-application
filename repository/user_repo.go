@@ -2,16 +2,19 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"pinjam-modal-app/model"
+	"time"
 
 	"pinjam-modal-app/utils"
 )
 
 type UserRepo interface {
+	CreateUser(user *model.UserModel) error
+	GetUserByUsername(string) (*model.UserModel, error)
+	GetUserByEmail(email string) (*model.UserModel, error)
 	GetUserById(int) (*model.UserModel, error)
-	GetUserByName(string) (*model.UserModel, error)
-	InsertUser(*model.UserModel) error
 	GetAllUser() (*[]model.UserModel, error)
 	UpadateUser(usr *model.UserModel) error
 	DeleteUser(*model.UserModel) error
@@ -20,28 +23,56 @@ type userRepoImpl struct {
 	db *sql.DB
 }
 
-func (usrRepo *userRepoImpl) InsertUser(usr *model.UserModel) error {
-	qry := utils.INSERT_USER
+func (r *userRepoImpl) CreateUser(user *model.UserModel) error {
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
 
-	_, err := usrRepo.db.Exec(qry, usr.Id, usr.UserName, usr.Email, usr.Password, usr.RolesName, usr.IsActive, usr.PhoneNumber, usr.CreatedAt, usr.UpdatedAt)
+	stmt, err := r.db.Prepare("INSERT INTO mst_user (user_name, email, password, roles_name, is_active, phone_number, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
 	if err != nil {
-		return fmt.Errorf("error on userRepoImpl.InsertUser() : %w", err)
+		return err
 	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(user.UserName, user.Email, user.Password, user.RolesName, user.IsActive, user.PhoneNumber, user.CreatedAt, user.UpdatedAt)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (usrRepo *userRepoImpl) GetUserByName(name string) (*model.UserModel, error) {
-	qry := utils.GET_USER_BY_NAME
+func (r *userRepoImpl) GetUserByUsername(username string) (*model.UserModel, error) {
+	selectStatment := "SELECT id, user_name, email, password, roles_name, is_active, phone_number, created_at, updated_at FROM mst_user WHERE user_name = $1"
 
-	usr := &model.UserModel{}
-	err := usrRepo.db.QueryRow(qry, name).Scan(&usr.Id, &usr.UserName, &usr.Email, &usr.Password, &usr.RolesName, &usr.IsActive, &usr.PhoneNumber, &usr.CreatedAt, &usr.UpdatedAt)
+	row := r.db.QueryRow(selectStatment, username)
+
+	user := &model.UserModel{}
+	err := row.Scan(&user.Id, &user.UserName, &user.Email, &user.Password, &user.RolesName, &user.IsActive, &user.PhoneNumber, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, fmt.Errorf("error on userRepoImpl.GetuserByName() : %w", err)
+		return nil, err
 	}
-	return usr, nil
+
+	return user, nil
+}
+
+func (r *userRepoImpl) GetUserByEmail(email string) (*model.UserModel, error) {
+	selectStatment := "SELECT id, user_name, email, password, roles_name, is_active, phone_number, created_at, updated_at FROM mst_user WHERE email = $1"
+
+	row := r.db.QueryRow(selectStatment, email)
+
+	user := &model.UserModel{}
+	err := row.Scan(&user.Id, &user.UserName, &user.Email, &user.Password, &user.RolesName, &user.IsActive, &user.PhoneNumber, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (usrRepo *userRepoImpl) UpadateUser(usr *model.UserModel) error {
