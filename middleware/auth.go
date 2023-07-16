@@ -41,13 +41,6 @@ func AuthenticationMiddleware(userRepo repository.UserRepo) gin.HandlerFunc {
 			return
 		}
 
-		// Periksa apakah pengguna telah logout
-		if isTokenLoggedOut(tokenString) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
-			return
-		}
-
 		// Setel data pengguna pada konteks Gin
 		user, err := getUserFromToken(token, userRepo)
 		if err != nil {
@@ -82,11 +75,6 @@ func validateToken(tokenString string) (*jwt.Token, error) {
 	}
 
 	return token, nil
-}
-
-func isTokenLoggedOut(tokenString string) bool {
-	// Periksa apakah token telah logout menggunakan repositori LogoutRepo
-	return userRepo.IsTokenLoggedOut(tokenString)
 }
 
 func getUserFromToken(token *jwt.Token, userRepo repository.UserRepo) (*model.UserModel, error) {
