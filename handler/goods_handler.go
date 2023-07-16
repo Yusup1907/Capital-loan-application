@@ -1,3 +1,5 @@
+
+
 package handler
 
 import (
@@ -92,6 +94,7 @@ func (goodsHandler *goodsHandlerImpl) GetGoodsById(ctx *gin.Context) {
 }
 
 func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
+
 		page, err := strconv.Atoi(ctx.Query("page"))
 		if err != nil {
 			page = 1
@@ -121,8 +124,8 @@ func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
 			"success": true,
 			"data":    response,
 		})
-}
 
+}
 func (goodsHandler *goodsHandlerImpl) GoodsRepayment(ctx *gin.Context) {
 		goodsID := ctx.Param("id")
 		if goodsID == "" {
@@ -151,7 +154,7 @@ func (goodsHandler *goodsHandlerImpl) GoodsRepayment(ctx *gin.Context) {
 			UpdatedAt:   time.Now(),
 		}
 	
-		err = goodsHandler.goodsUsecase.GoodsRepayment(id, repaymentGoods)
+		err = goodsHandler.goodsUsecase.UpdateGoodsRepayment(id, repaymentGoods)
 		if err != nil {
 			log.Println("Failed to process loan repayment:", err)
 			ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -240,8 +243,6 @@ func (goodsHandler *goodsHandlerImpl) generateIncomeReport(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, successResponse)
 }
 
-
-
 	
 func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHandler {
 	ghandler := goodsHandlerImpl{
@@ -253,6 +254,7 @@ func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHan
 	srv.GET("/goods/:id", ghandler.GetGoodsById)
 	srv.GET("/goods", ghandler.GetAllTrxGoods)
 	srv.PUT("/goods/:id", ghandler.GoodsRepayment)
+
 	srv.GET("/goods-repayment", ghandler.GetLoanGoodsByRepaymentStatus)
 	srv.GET("/goods-income-report", ghandler.generateIncomeReport)
 	return ghandler

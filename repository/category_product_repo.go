@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"pinjam-modal-app/model"
+	"pinjam-modal-app/utils"
 	"time"
 )
 
@@ -21,7 +22,7 @@ type categoryProductRepoImpl struct {
 }
 
 func (cpRepo *categoryProductRepoImpl) InsertCategoryProduct(cp *model.CategoryProductModel) error {
-	qry := "INSERT INTO category_product(category_product_name, created_at, updated_at) VALUES ($1 ,$2, DEFAULT) RETURNING id"
+	qry := utils.INSERT_CATEGORY_PRODUCT
 
 	cp.CreateAt = time.Now()
 	err := cpRepo.db.QueryRow(qry, cp.CategoryProductName, cp.CreateAt).Scan(&cp.Id)
@@ -32,7 +33,7 @@ func (cpRepo *categoryProductRepoImpl) InsertCategoryProduct(cp *model.CategoryP
 }
 
 func (cpRepo *categoryProductRepoImpl) GetCategoryProductById(id int) (*model.CategoryProductModel, error) {
-	qry := "SELECT id, category_product_name, created_at, updated_at FROM category_product WHERE id = $1"
+	qry := utils.GET_CATEGORY_PRODUCT_BY_ID
 
 	cp := &model.CategoryProductModel{}
 	err := cpRepo.db.QueryRow(qry, id).Scan(&cp.Id, &cp.CategoryProductName, &cp.CreateAt, &cp.UpdateAt)
@@ -46,7 +47,7 @@ func (cpRepo *categoryProductRepoImpl) GetCategoryProductById(id int) (*model.Ca
 }
 
 func (cpRepo *categoryProductRepoImpl) GetCategoryProductByName(name string) (*model.CategoryProductModel, error) {
-	qry := "SELECT id, category_product_name, created_at, updated_at FROM category_product WHERE category_product_name = $1"
+	qry := utils.GET_CATEGORY_PRODUCT_BY_NAME
 
 	cp := &model.CategoryProductModel{}
 	err := cpRepo.db.QueryRow(qry, name).Scan(&cp.Id, &cp.CategoryProductName, &cp.CreateAt, &cp.UpdateAt)
@@ -60,7 +61,7 @@ func (cpRepo *categoryProductRepoImpl) GetCategoryProductByName(name string) (*m
 }
 
 func (cpRepo *categoryProductRepoImpl) GetAllCategoryProduct() ([]model.CategoryProductModel, error){
-	qry := "SELECT  id, category_product_name, created_at, updated_at FROM category_product ORDER BY id"
+	qry := utils.GET_ALLCATEGORYPRODUCT
 	rows, err := cpRepo.db.Query(qry)
 	if  err != nil{
 		return nil, fmt.Errorf("error oncategoryProductRepoImpl.GetAllCategoryProduct : %w", err)
@@ -76,7 +77,7 @@ func (cpRepo *categoryProductRepoImpl) GetAllCategoryProduct() ([]model.Category
 }
 
 func (cpRepo *categoryProductRepoImpl) UpdateCategoryProduct(id int , cp *model.CategoryProductModel) error{
-	qryId := "SELECT id FROM category_product WHERE id = $1"
+	qryId := utils.UPDATE_CATEGORY_PRODUCT
 	err := cpRepo.db.QueryRow(qryId, cp.Id).Scan(&cp.Id)
 	if err != nil{
 		return fmt.Errorf("data category product not found")
@@ -91,7 +92,7 @@ func (cpRepo *categoryProductRepoImpl) UpdateCategoryProduct(id int , cp *model.
 }
 
 func (cpRepo *categoryProductRepoImpl) DeleteCategoryProduct(id int) error {
-	qry := "DELETE FROM category_product WHERE id = $1"
+	qry := utils.DELETE_CATEGORYPRODUCT
 	_, err := cpRepo.db.Exec(qry, id)
 	if err != nil{
 		return fmt.Errorf("error on categoryProductRepoImpl.DeleteCategoryProduct : %w ", err)

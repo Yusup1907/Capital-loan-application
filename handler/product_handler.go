@@ -50,7 +50,21 @@ func (ph *ProductHandler) createProduct(ctx *gin.Context) {
 }
 
 func (ph *ProductHandler) getAllProduct(ctx *gin.Context) {
-	products, err := ph.usecase.GetAllProduct()
+	pageStr := ctx.Query("page")
+	limitStr := ctx.Query("limit")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page value"})
+		return
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit value"})
+		return
+	}
+	products, err := ph.usecase.GetAllProduct(page, limit)
 	if err != nil {
 		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to retrieve product data")
 		ctx.JSON(http.StatusInternalServerError, errResponse)

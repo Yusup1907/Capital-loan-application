@@ -12,7 +12,7 @@ type GoodsUsecase interface {
 	InsertGoods(*model.GoodsModel) error
 	GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error)
 	GetGoodsById(int) (*model.LoanGoodsModel, error)
-	GoodsRepayment(int, *model.LoanRepaymentModel) error
+	UpdateGoodsRepayment(int, *model.LoanRepaymentModel) error
 	GetGooodsRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanGoodsModel, error)
 	GenerateIncomeReport(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, float64, error)
 }
@@ -48,10 +48,6 @@ func (goodsUsecase *goodsUsecaseImpl) InsertGoods(goods *model.GoodsModel) error
 	return nil
 }
 
-func (goodsUsecase *goodsUsecaseImpl) GetGoodsById(id int) (*model.LoanGoodsModel, error){
-	return goodsUsecase.goodsRepo.GetGoodsById(id)
-}
-
 func (goodsUsecase *goodsUsecaseImpl) GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error){
 	if page <= 0 {
 		page = 1
@@ -62,7 +58,7 @@ func (goodsUsecase *goodsUsecaseImpl) GetAllTrxGoods(page, limit int) ([]*model.
 	return goodsUsecase.goodsRepo.GetAllTrxGoods(page, limit)
 }
 
-func (goodUsecase *goodsUsecaseImpl) GoodsRepayment(id int, repayment *model.LoanRepaymentModel) error{
+func (goodUsecase *goodsUsecaseImpl) UpdateGoodsRepayment(id int, repayment *model.LoanRepaymentModel) error{
 	goods, err := goodUsecase.goodsRepo.GetGoodsById(id)
 	if err != nil {
 		return fmt.Errorf("failed to get loan application: %w", err)
@@ -81,7 +77,7 @@ func (goodUsecase *goodsUsecaseImpl) GoodsRepayment(id int, repayment *model.Loa
 		return fmt.Errorf("payment date must be on or after due date")
 	}
 
-	err = goodUsecase.goodsRepo.GoodsRepayment(id, repayment)
+	err = goodUsecase.goodsRepo.UpdateGoodsRepayment(id, repayment)
 	if err != nil {
 		return fmt.Errorf("failed to update loan repayment: %w", err)
 	}
@@ -112,6 +108,10 @@ func (goodsUsecase *goodsUsecaseImpl) GenerateIncomeReport(startDate time.Time, 
 	}
 
 	return loanRepayments, totalIncome, nil
+}
+
+func (goodsUsecase *goodsUsecaseImpl) GetGoodsById(id int) (*model.LoanGoodsModel, error){
+	return goodsUsecase.goodsRepo.GetGoodsById(id)
 }
 
 

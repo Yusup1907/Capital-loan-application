@@ -8,7 +8,7 @@ import (
 
 type ProductRepo interface {
 	CreateProduct(newProduct *model.ProductModel) error
-	GetAllProduct() ([]*model.ProductModel, error)
+	GetAllProduct(page, limit int) ([]*model.ProductModel, error)
 	GetProductById(id int) (*model.ProductModel, error)
 	GetProductByName(nameProduct string) (*model.ProductModel, error)
 	UpdateProduct(id int, updateProduct *model.ProductModel) error
@@ -28,7 +28,8 @@ func (p *productRepo) CreateProduct(newProduct *model.ProductModel) error {
 	return nil
 }
 
-func (p *productRepo) GetAllProduct() ([]*model.ProductModel, error) {
+func (p *productRepo) GetAllProduct(page, limit int) ([]*model.ProductModel, error) {
+	offset := (page - 1) * limit
 	selectStatement := `SELECT 
 							mst_product.id, 
 							mst_product.product_name, 
@@ -45,9 +46,10 @@ func (p *productRepo) GetAllProduct() ([]*model.ProductModel, error) {
 						INNER JOIN 
 							category_product ON mst_product.category_product_id = category_product.id
 						ORDER BY 
-							mst_product.id ASC`
+							mst_product.id ASC
+						OFFSET $1 LIMIT $2`
 
-	rows, err := p.db.Query(selectStatement)
+	rows, err := p.db.Query(selectStatement, offset, limit)
 	if err != nil {
 		return nil, fmt.Errorf("GetAllProduct() : %w", err)
 	}
@@ -57,7 +59,7 @@ func (p *productRepo) GetAllProduct() ([]*model.ProductModel, error) {
 	for rows.Next() {
 		product := &model.ProductModel{}
 		err := rows.Scan(
-			&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.CategorProductyName,
+			&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.CategoryProductName,
 			&product.Status, &product.CreatedAt, &product.UpdatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("GetAllProduct() : %w", err)
@@ -92,7 +94,7 @@ func (p *productRepo) GetProductById(id int) (*model.ProductModel, error) {
 	row := p.db.QueryRow(selectStatement, id)
 
 	product := &model.ProductModel{}
-	err := row.Scan(&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.CategorProductyName,
+	err := row.Scan(&product.Id, &product.ProductName, &product.Description, &product.Price, &product.Stok, &product.CategoryProductId, &product.CategoryProductName,
 		&product.Status, &product.CreatedAt, &product.UpdatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {

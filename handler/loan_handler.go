@@ -209,6 +209,37 @@ func (lh *LoanHandler) getLoanApplicationsByRepaymentStatus(ctx *gin.Context) {
 	})
 }
 
+func (lh *LoanHandler) generateIncomeReport(ctx *gin.Context) {
+	startDateStr := ctx.Query("start_date")
+	endDateStr := ctx.Query("end_date")
+
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date"})
+		return
+	}
+
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date"})
+		return
+	}
+
+	loanRepayments, totalIncome, err := lh.usecase.GenerateIncomeReport(startDate, endDate)
+	if err != nil {
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to generate income report")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
+		return
+	}
+
+	successResponse := gin.H{
+		"success":        true,
+		"loanRepayments": loanRepayments,
+		"totalIncome":    totalIncome,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+
 func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUsecase) *LoanHandler {
 	handler := LoanHandler{
 		router:  r,
@@ -219,6 +250,7 @@ func NewLoanApplicationHandler(r *gin.Engine, usecase usecase.LoanApplicationUse
 	r.GET("/loan/:id", handler.getLoanApplicationById)
 	r.PUT("/loan/:id", handler.loanRepayment)
 	r.GET("/loan-application", handler.getLoanApplicationsByRepaymentStatus)
+	r.GET("/income-report", handler.generateIncomeReport)
 
 	return &handler
 }

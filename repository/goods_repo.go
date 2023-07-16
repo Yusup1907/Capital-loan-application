@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"pinjam-modal-app/model"
+	"pinjam-modal-app/utils"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type GoodsRepo interface {
 	GetCustomerById(int) (*model.ValidasiCustomerModel, error)
 	GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error)
 	GetGoodsById(int) (*model.LoanGoodsModel, error)
-	GoodsRepayment(int, *model.LoanRepaymentModel) error
+	UpdateGoodsRepayment(int, *model.LoanRepaymentModel) error
 	GetGooodsRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanGoodsModel, error)
 	GetLoanGoodsRepaymentsByDateRange(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, error)
 }
@@ -22,8 +23,7 @@ type goodsRepoImpl struct {
 }
 
 func (goodsRepo *goodsRepoImpl) InsertGoods(goods *model.GoodsModel) error {
-	insertQuery := "INSERT INTO trx_goods (customer_id, loan_date, payment_date, due_date, category_loan_id, product_id, quantity, price, amount, created_at, status, repyement_status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
-
+	insertQuery := utils.INSERT_GOODS
 	goods.CreateAt = time.Now()
 	goods.LoadDate = time.Now()
 
@@ -34,7 +34,6 @@ func (goodsRepo *goodsRepoImpl) InsertGoods(goods *model.GoodsModel) error {
 	}
 
 	goods.Amount = float64(goods.Quantity) * product.Price
-
 	_, err = goodsRepo.db.Exec(insertQuery, goods.CustomerId, goods.LoadDate, goods.PaymentDate, goods.DueDate, goods.CategoryIdLoan, goods.ProductId, goods.Quantity, product.Price, goods.Amount, goods.CreateAt, goods.Status, goods.RepaymentStatus)
 	if err != nil {
 		return fmt.Errorf("gagal memasukkan data goods: %w", err)
@@ -44,7 +43,7 @@ func (goodsRepo *goodsRepoImpl) InsertGoods(goods *model.GoodsModel) error {
 }
 
 func (goodsRepo *goodsRepoImpl) GetCustomerById(id int) (*model.ValidasiCustomerModel, error) {
-	qry := "SELECT id, nik, nokk, emergencyname, emergencyphone, last_salary FROM mst_customer WHERE id = $1"
+	qry := utils.GET_CUSTOMER_BY_ID
 
 	customer := &model.ValidasiCustomerModel{}
 	err := goodsRepo.db.QueryRow(qry, id).Scan(
@@ -60,19 +59,18 @@ func (goodsRepo *goodsRepoImpl) GetCustomerById(id int) (*model.ValidasiCustomer
 }
 
 func (goodsRepo *goodsRepoImpl) GetGoodsById(id int) (*model.LoanGoodsModel, error) {
-	qry := `SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.deskripsi, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone_number, c.nik, c.nokk, c.emergencyname, c.emergencyphone, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id WHERE g.id = $1`
-
+	qry := utils.GET_GOODS_BY_ID	
 	loangoods := &model.LoanGoodsModel{}
 	err := goodsRepo.db.QueryRow(qry, id).Scan(
-		&loangoods.Id, &loangoods.CustomerId, &loangoods.LoanDate,
-		&loangoods.DueDate, &loangoods.CategoryLoanID, &loangoods.ProductId,
-		&loangoods.ProductName, &loangoods.Quantity, &loangoods.Price,
-		&loangoods.Amount, &loangoods.Description, &loangoods.Status,
-		&loangoods.RepaymentStatus, &loangoods.CreatedAt, &loangoods.UpdatedAt,
-		&loangoods.FullName, &loangoods.Address, &loangoods.PhoneNumber,
-		&loangoods.NIK, &loangoods.NoKK, &loangoods.EmergencyName,
-		&loangoods.EmergencyContact, &loangoods.LastSalary,
-	)
+					&loangoods.Id, &loangoods.CustomerId,&loangoods.LoanDate,
+					&loangoods.DueDate, &loangoods.CategoryLoanID, &loangoods.ProductId, 
+					&loangoods.ProductName,&loangoods.Quantity,&loangoods.Price, 
+					&loangoods.Amount, &loangoods.Description,&loangoods.Status, 
+					&loangoods.RepaymentStatus, &loangoods.CreatedAt,&loangoods.UpdatedAt,
+					&loangoods.FullName, &loangoods.Address,&loangoods.PhoneNumber,
+					&loangoods.NIK, &loangoods.NoKK,&loangoods.EmergencyName,
+					&loangoods.EmergencyContact, &loangoods.LastSalary,
+				)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("goods not found")
@@ -85,8 +83,7 @@ func (goodsRepo *goodsRepoImpl) GetGoodsById(id int) (*model.LoanGoodsModel, err
 
 func (goodsRepo *goodsRepoImpl) GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error) {
 	offset := (page - 1) * limit
-	query :=
-		`SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.deskripsi, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone_number, c.nik, c.nokk, c.emergencyname, c.emergencyphone, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id ORDER BY g.id ASC OFFSET $1 LIMIT $2`
+	query := utils.GET_ALL_TRX_GOODS
 	rows, err := goodsRepo.db.Query(query, offset, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get loan goods: %w", err)
@@ -108,9 +105,10 @@ func (goodsRepo *goodsRepoImpl) GetAllTrxGoods(page, limit int) ([]*model.LoanGo
 	return loangoods, nil
 }
 
-func (goodsRepo *goodsRepoImpl) GoodsRepayment(id int, repayment *model.LoanRepaymentModel) error {
-	query := "UPDATE trx_goods SET payment_date = $1, payment = $2, repayment_status = $3, updated_at = $4 WHERE id = $5"
-	_, err := goodsRepo.db.Exec(query, repayment.PaymentDate, repayment.Payment, model.StatusEnum(repayment.RepaymentStatus), repayment.UpdatedAt, id)
+func (goodsRepo *goodsRepoImpl) UpdateGoodsRepayment(id int, repayment *model.LoanRepaymentModel) error {
+	updateStatment := utils.UPDATE_GOODS_REPAYMENT
+	_, err := goodsRepo.db.Exec(updateStatment, repayment.PaymentDate, repayment.Payment, model.StatusEnum(repayment.RepaymentStatus), repayment.UpdatedAt, id)
+
 	if err != nil {
 		return fmt.Errorf("error on loanApplicationRepo.LoanRepayment() : %w", err)
 	}
@@ -119,9 +117,7 @@ func (goodsRepo *goodsRepoImpl) GoodsRepayment(id int, repayment *model.LoanRepa
 
 func (goodsRepo *goodsRepoImpl) GetGooodsRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanGoodsModel, error) {
 	offset := (page - 1) * limit
-	query :=
-		`SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.deskripsi, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone_number, c.nik, c.nokk, c.emergencyname, c.emergencyphone, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id WHERE g.repayment_status = $3 ORDER BY g.id ASC OFFSET $1 LIMIT $2`
-
+	query := utils.GET_GOODS_REPAYMENT_STATUS
 	rows, err := goodsRepo.db.Query(query, offset, limit, repaymentStatus)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get loan applications: %w", err)
@@ -143,11 +139,7 @@ func (goodsRepo *goodsRepoImpl) GetGooodsRepaymentStatus(page, limit int, repaym
 }
 
 func (goodsRepo *goodsRepoImpl) GetLoanGoodsRepaymentsByDateRange(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, error) {
-	selectStatement := `
-		SELECT payment_date, payment
-		FROM trx_loan
-		WHERE payment_date >= $1 AND payment_date <= $2
-	`
+	selectStatement := utils.GET_GOODS_REPAYMENT_BY_DATE_RANGE
 
 	rows, err := goodsRepo.db.Query(selectStatement, startDate, endDate)
 	if err != nil {
