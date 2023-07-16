@@ -94,6 +94,7 @@ func (goodsHandler *goodsHandlerImpl) GetGoodsById(ctx *gin.Context) {
 }
 
 func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
+
 		page, err := strconv.Atoi(ctx.Query("page"))
 		if err != nil {
 			page = 1
@@ -123,9 +124,9 @@ func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
 			"success": true,
 			"data":    response,
 		})
-	}
 
-	func (goodsHandler *goodsHandlerImpl) GoodsRepayment(ctx *gin.Context) {
+}
+func (goodsHandler *goodsHandlerImpl) GoodsRepayment(ctx *gin.Context) {
 		goodsID := ctx.Param("id")
 		if goodsID == "" {
 			errResponse := apperror.NewAppError(http.StatusBadRequest, "ID cannot be empty")
@@ -153,7 +154,7 @@ func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
 			UpdatedAt:   time.Now(),
 		}
 	
-		err = goodsHandler.goodsUsecase.GoodsRepayment(id, repaymentGoods)
+		err = goodsHandler.goodsUsecase.UpdateGoodsRepayment(id, repaymentGoods)
 		if err != nil {
 			log.Println("Failed to process loan repayment:", err)
 			ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -167,7 +168,81 @@ func(goodsHandler *goodsHandlerImpl) GetAllTrxGoods(ctx *gin.Context){
 			"success": true,
 			"message": "Loan repayment processed successfully",
 		})
+}
+
+func (goodsHandler *goodsHandlerImpl) GetLoanGoodsByRepaymentStatus(ctx *gin.Context) {
+	pageStr := ctx.Query("page")
+	limitStr := ctx.Query("limit")
+	repaymentStatusStr := ctx.Query("repayment_status")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid page value"})
+		return
 	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid limit value"})
+		return
+	}
+
+	var repaymentStatus model.StatusEnum
+	if repaymentStatusStr == "lunas" {
+		repaymentStatus = model.RepaymentStatusLunas
+	} else if repaymentStatusStr == "belum lunas" {
+		repaymentStatus = model.RepaymentStatusBelumLunas
+	} else {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid repayment status value"})
+		return
+	}
+
+	lunasApplications, err := goodsHandler.goodsUsecase.GetGooodsRepaymentStatus(page, limit, repaymentStatus)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success":      false,
+			"errorMessage": fmt.Sprintf("Failed to get loan applications: %v", err),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    lunasApplications,
+	})
+}
+
+func (goodsHandler *goodsHandlerImpl) generateIncomeReport(ctx *gin.Context) {
+	startDateStr := ctx.Query("start_date")
+	endDateStr := ctx.Query("end_date")
+
+	startDate, err := time.Parse("2006-01-02", startDateStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start date"})
+		return
+	}
+
+	endDate, err := time.Parse("2006-01-02", endDateStr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end date"})
+		return
+	}
+
+	loanRepayments, totalIncome, err := goodsHandler.goodsUsecase.GenerateIncomeReport(startDate, endDate)
+	if err != nil {
+		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to generate income report")
+		ctx.JSON(http.StatusInternalServerError, errResponse)
+		return
+	}
+
+	successResponse := gin.H{
+		"success":        true,
+		"loanRepayments": loanRepayments,
+		"totalIncome":    totalIncome,
+	}
+	ctx.JSON(http.StatusOK, successResponse)
+}
+
 	
 func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHandler {
 	ghandler := goodsHandlerImpl{
@@ -179,5 +254,8 @@ func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHan
 	srv.GET("/goods/:id", ghandler.GetGoodsById)
 	srv.GET("/goods", ghandler.GetAllTrxGoods)
 	srv.PUT("/goods/:id", ghandler.GoodsRepayment)
+
+	srv.GET("/goods-repayment", ghandler.GetLoanGoodsByRepaymentStatus)
+	srv.GET("/goods-income-report", ghandler.generateIncomeReport)
 	return ghandler
 }

@@ -10,9 +10,11 @@ import (
 
 type GoodsUsecase interface {
 	InsertGoods(*model.GoodsModel) error
-	GetGoodsById(int) (*model.LoanGoodsModel, error)
 	GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error)
-	GoodsRepayment(int, *model.LoanRepaymentModel) error
+	GetGoodsById(int) (*model.LoanGoodsModel, error)
+	UpdateGoodsRepayment(int, *model.LoanRepaymentModel) error
+	GetGooodsRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanGoodsModel, error)
+	GenerateIncomeReport(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, float64, error)
 }
 
 type goodsUsecaseImpl struct {
@@ -37,16 +39,13 @@ func (goodsUsecase *goodsUsecaseImpl) InsertGoods(goods *model.GoodsModel) error
 		fmt.Println("Silakan lengkapi data customer")
 	}
 
+
 	err = goodsUsecase.goodsRepo.InsertGoods(goods)
 	if err != nil {
 		return fmt.Errorf("failed to insert goods: %v", err)
 	}
 
 	return nil
-}
-
-func (goodsUsecase *goodsUsecaseImpl) GetGoodsById(id int) (*model.LoanGoodsModel, error){
-	return goodsUsecase.goodsRepo.GetGoodsById(id)
 }
 
 func (goodsUsecase *goodsUsecaseImpl) GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error){
@@ -59,7 +58,7 @@ func (goodsUsecase *goodsUsecaseImpl) GetAllTrxGoods(page, limit int) ([]*model.
 	return goodsUsecase.goodsRepo.GetAllTrxGoods(page, limit)
 }
 
-func (goodUsecase *goodsUsecaseImpl) GoodsRepayment(id int, repayment *model.LoanRepaymentModel) error{
+func (goodUsecase *goodsUsecaseImpl) UpdateGoodsRepayment(id int, repayment *model.LoanRepaymentModel) error{
 	goods, err := goodUsecase.goodsRepo.GetGoodsById(id)
 	if err != nil {
 		return fmt.Errorf("failed to get loan application: %w", err)
@@ -78,13 +77,43 @@ func (goodUsecase *goodsUsecaseImpl) GoodsRepayment(id int, repayment *model.Loa
 		return fmt.Errorf("payment date must be on or after due date")
 	}
 
-	err = goodUsecase.goodsRepo.GoodsRepayment(id, repayment)
+	err = goodUsecase.goodsRepo.UpdateGoodsRepayment(id, repayment)
 	if err != nil {
 		return fmt.Errorf("failed to update loan repayment: %w", err)
 	}
 
 	return nil
 }
+
+func (goodsUsecase *goodsUsecaseImpl)  GetGooodsRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanGoodsModel, error){
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	return goodsUsecase.goodsRepo.GetGooodsRepaymentStatus(page, limit, repaymentStatus)
+}
+
+func (goodsUsecase *goodsUsecaseImpl) GenerateIncomeReport(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, float64, error) {
+	loanRepayments, err := goodsUsecase.goodsRepo.GetLoanGoodsRepaymentsByDateRange(startDate, endDate)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to retrieve loan repayments: %w", err)
+	}
+
+	totalIncome := 0.0
+	for _, repayment := range loanRepayments {
+		totalIncome += repayment.Payment
+	}
+
+	return loanRepayments, totalIncome, nil
+}
+
+func (goodsUsecase *goodsUsecaseImpl) GetGoodsById(id int) (*model.LoanGoodsModel, error){
+	return goodsUsecase.goodsRepo.GetGoodsById(id)
+}
+
 
 func NewGoodsUsecase(goodsRepo repository.GoodsRepo) GoodsUsecase {
 	return &goodsUsecaseImpl{

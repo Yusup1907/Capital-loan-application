@@ -26,9 +26,8 @@ func (s *server) Run() {
 	NewCategoryLoanHandler(s.engine, s.usecaseManager.GetCategoryLoanUsecase())
 	NewLoanApplicationHandler(s.engine, s.usecaseManager.GetLoanAppUsecase())
 
+	s.engine.Run(":8080")
 	s.engine.Use(middleware.LoggerMiddleware())
-
-	s.engine.Run()
 }
 
 func NewServer() Server {
