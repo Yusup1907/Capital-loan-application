@@ -1,127 +1,95 @@
 package usecase
 
 import (
+	"errors"
 	"fmt"
+	"time"
 
-	"pinjam-modal-app/apperror"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/repository"
+	"pinjam-modal-app/utils"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecase interface {
+	RegisterUser(user *model.UserModel) error
 	GetUserById(int) (*model.UserModel, error)
-	InsertUser(usr *model.UserModel) error
-	UpadateUser(usr *model.UserModel) error
-	GetUserByName(string) (*model.UserModel, error)
 	GetAllUser() (*[]model.UserModel, error)
 	DeleteUser(*model.UserModel) error
 }
 
 type userUsecaseImpl struct {
-	usrRepo repository.UserRepo
+	userRepo repository.UserRepo
+}
+
+func (uc *userUsecaseImpl) RegisterUser(user *model.UserModel) error {
+	// Validasi kredensial
+	existingUser, err := uc.userRepo.GetUserByUsername(user.UserName)
+	if err == nil && existingUser != nil {
+		return errors.New("Username is already taken")
+	}
+
+	// Validasi email unik
+	existingUser, err = uc.userRepo.GetUserByEmail(user.Email)
+	if err == nil && existingUser != nil {
+		return errors.New("Email is already taken")
+	}
+
+	// Validasi password keamanan
+	if !utils.IsValidPassword(user.Password) {
+		return errors.New("Password is not strong enough")
+	}
+
+	// Validasi data pengguna
+	if !utils.IsValidEmail(user.Email) {
+		return errors.New("Invalid email address")
+	}
+
+	// Generate hash password
+	passHash, err := GeneratePasswordHash(user.Password)
+	if err != nil {
+		return fmt.Errorf("Failed to generate password hash: %w", err)
+	}
+	user.Password = passHash
+
+	// Set nilai default
+	user.RolesName = "User"
+	user.IsActive = true
+	user.CreatedAt = time.Now()
+	user.UpdatedAt = time.Now()
+
+	// Buat pengguna baru
+	err = uc.userRepo.CreateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GeneratePasswordHash(password string) (string, error) {
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
 }
 
 func (usrUsecase *userUsecaseImpl) GetUserById(id int) (*model.UserModel, error) {
-	return usrUsecase.usrRepo.GetUserById(id)
+	return usrUsecase.userRepo.GetUserById(id)
 }
 
 func (usrUsecase *userUsecaseImpl) GetAllUser() (*[]model.UserModel, error) {
-	return usrUsecase.usrRepo.GetAllUser()
-}
-
-func (usrUsecase *userUsecaseImpl) GetUserByName(name string) (*model.UserModel, error) {
-	return usrUsecase.usrRepo.GetUserByName(name)
-}
-
-func (usrUseCase *userUsecaseImpl) InsertUser(usr *model.UserModel) error {
-	if usr.UserName == "" {
-		return apperror.AppError{
-			ErrorCode:    1,
-			ErrorMessage: "Name cannot be empty",
-		}
-	}
-	if usr.Password == "" {
-		return apperror.AppError{
-			ErrorCode:    1,
-			ErrorMessage: "Password cannot be empty",
-		}
-	}
-
-	existData, err := usrUseCase.usrRepo.GetUserByName(usr.UserName)
-	if err != nil {
-		return fmt.Errorf("userUsecaseImpl.InsertUser(): %w", err)
-	}
-	if existData != nil {
-		return apperror.AppError{
-			ErrorCode:    1,
-			ErrorMessage: fmt.Sprintf("User data with the name %v already exists", usr.UserName),
-		}
-	}
-
-	passHash, err := bcrypt.GenerateFromPassword([]byte(usr.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("userUsecaseImpl.GenerateFromPassword(): %w", err)
-	}
-	usr.Password = string(passHash)
-	usr.RolesName = "User"
-	usr.IsActive = true
-	return usrUseCase.usrRepo.InsertUser(usr)
-}
-
-func (usrUseCase *userUsecaseImpl) UpadateUser(usr *model.UserModel) error {
-	if usr.UserName == "" {
-		return apperror.AppError{
-			ErrorCode:    1,
-			ErrorMessage: "Name cannot be empty",
-		}
-	}
-	if usr.Password == "" {
-		return apperror.AppError{
-			ErrorCode:    1,
-			ErrorMessage: "Password cannot be empty",
-		}
-	}
-
-	existData, err := usrUseCase.usrRepo.GetUserById(usr.Id)
-	if err != nil {
-		return fmt.Errorf("userUseCaseImpl.EditUserById(): %w", err)
-	}
-	if existData == nil {
-		return apperror.AppError{
-			ErrorCode:    1,
-			ErrorMessage: fmt.Sprintf("User data with the ID %v does not exist", usr.Id),
-		}
-	}
-
-	existDataUsr, err := usrUseCase.usrRepo.GetUserByName(usr.UserName)
-	if err != nil {
-		return fmt.Errorf("userUseCaseImpl.GetUserByName(): %w", err)
-	}
-	if existDataUsr != nil && existDataUsr.Id != usr.Id {
-		return apperror.AppError{
-			ErrorCode:    1,
-			ErrorMessage: fmt.Sprintf("User data with the username %v already exists", usr.UserName),
-		}
-	}
-
-	passHash, err := bcrypt.GenerateFromPassword([]byte(usr.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return fmt.Errorf("userUsecaseImpl.GenerateFromPassword(): %w", err)
-	}
-	usr.Password = string(passHash)
-	usr.RolesName = "user"
-	usr.IsActive = true
-	return usrUseCase.usrRepo.UpadateUser(usr)
+	return usrUsecase.userRepo.GetAllUser()
 }
 
 func (usrUsecase *userUsecaseImpl) DeleteUser(usr *model.UserModel) error {
-	return usrUsecase.usrRepo.DeleteUser(usr)
+	return usrUsecase.userRepo.DeleteUser(usr)
 }
 
-func NewUserUseCase(usrRepo repository.UserRepo) UserUsecase {
+func NewUserUseCase(userRepo repository.UserRepo) UserUsecase {
 	return &userUsecaseImpl{
-		usrRepo: usrRepo,
+		userRepo: userRepo,
 	}
 }

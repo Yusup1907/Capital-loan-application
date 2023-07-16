@@ -3,18 +3,13 @@ package usecase
 import (
 	"pinjam-modal-app/repository"
 
-	"fmt"
-	utils "pinjam-modal-app/utils/authutil"
-
 	"github.com/gin-contrib/sessions"
 
 	"github.com/gin-gonic/gin"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginUsecase interface {
-	Login(email, password string) (string, error)
+	// Login(email, password string) (string, error)
 	Logout(ctx *gin.Context) error
 }
 
@@ -22,27 +17,27 @@ type loginUsecase struct {
 	loginRepo repository.LoginRepo
 }
 
-func (lu *loginUsecase) Login(email, password string) (string, error) {
-	// Mengecek apakah pengguna dengan email tersebut ada di penyimpanan data
-	user, err := lu.loginRepo.GetUserByEmail(email)
-	if err != nil {
-		return "", fmt.Errorf("failed to retrieve user: %v", err)
-	}
+// func (lu *loginUsecase) Login(email, password string) (string, error) {
+// 	// Mengecek apakah pengguna dengan email tersebut ada di penyimpanan data
+// 	user, err := lu.loginRepo.GetUserByEmail(email)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to retrieve user: %v", err)
+// 	}
 
-	// Verifikasi password pengguna dengan menggunakan bcrypt
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
-	if err != nil {
-		return "", fmt.Errorf("invalid email or password")
-	}
+// 	// Verifikasi password pengguna dengan menggunakan bcrypt
+// 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+// 	if err != nil {
+// 		return "", fmt.Errorf("invalid email or password")
+// 	}
 
-	// Menghasilkan token JWT
-	token, err := utils.GenerateToken(user.Email)
-	if err != nil {
-		return "", fmt.Errorf("failed to generate token: %v", err)
-	}
+// 	// Menghasilkan token JWT
+// 	token, err := utils.GenerateToken(user.UserName)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to generate token: %v", err)
+// 	}
 
-	return token, nil
-}
+//		return token, nil
+//	}
 func (lu *loginUsecase) Logout(ctx *gin.Context) error {
 	session := sessions.Default(ctx)
 	session.Clear()
