@@ -8,12 +8,14 @@ import (
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/repository"
 	"pinjam-modal-app/utils"
+	"pinjam-modal-app/utils/authutil"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserUsecase interface {
 	RegisterUser(user *model.UserModel) error
+	Login(email, password string) (string, error)
 	GetUserById(int) (*model.UserModel, error)
 	GetAllUser() (*[]model.UserModel, error)
 	DeleteUser(*model.UserModel) error
@@ -74,6 +76,28 @@ func GeneratePasswordHash(password string) (string, error) {
 		return "", err
 	}
 	return string(hash), nil
+}
+
+func (uc *userUsecaseImpl) Login(email, password string) (string, error) {
+	// Cari pengguna berdasarkan email
+	user, err := uc.userRepo.GetUserByEmail(email)
+	if err != nil {
+		return "", errors.New("Invalid email or password")
+	}
+
+	// Verifikasi password
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		return "", errors.New("Invalid email or password")
+	}
+
+	// Generate token
+	token, err := authutil.GenerateToken(user)
+	if err != nil {
+		return "", fmt.Errorf("Failed to generate token: %w", err)
+	}
+
+	return token, nil
 }
 
 func (usrUsecase *userUsecaseImpl) GetUserById(id int) (*model.UserModel, error) {

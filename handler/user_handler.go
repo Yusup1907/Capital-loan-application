@@ -34,6 +34,28 @@ func (h *UserHandler) registerUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+func (h *UserHandler) loginUser(c *gin.Context) {
+	// Parsing request body
+	var credentials struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := c.ShouldBindJSON(&credentials); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to parse request body"})
+		return
+	}
+
+	// Login user
+	token, err := h.usrUsecase.Login(credentials.Email, credentials.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		return
+	}
+
+	// Mengembalikan response dengan token
+	c.JSON(http.StatusOK, gin.H{"token": token})
+}
+
 // func (usrHandler *UserHandler) UpadteUser(ctx *gin.Context) {
 // 	usr := &model.UserModel{}
 // 	err := ctx.ShouldBindJSON(&usr)
@@ -175,8 +197,8 @@ func NewUserHandler(srv *gin.Engine, usrUsecase usecase.UserUsecase) *UserHandle
 	usrHandler := &UserHandler{
 		usrUsecase: usrUsecase,
 	}
-	srv.POST("/user", usrHandler.registerUser)
-	// srv.GET("/user", usrHandler.GetAllUser)
+	srv.POST("/register", usrHandler.registerUser)
+	srv.POST("/login", usrHandler.loginUser)
 	// srv.GET("/user/:name", usrHandler.GetUserByName)
 	// srv.GET("/user/id/:id", usrHandler.GetUserById)
 	// srv.PUT("/user", usrHandler.UpadteUser)
