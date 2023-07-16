@@ -9,15 +9,10 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-<<<<<<< HEAD
             "console": "integratedTerminal",
             "program": "main.go"
         }
     ]
 }
-=======
-            "program": "main.go"
-        }
-    ]
-}
->>>>>>> doni
+
+

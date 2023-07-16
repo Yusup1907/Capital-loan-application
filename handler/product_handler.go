@@ -38,6 +38,7 @@ func (ph *ProductHandler) createProduct(ctx *gin.Context) {
 
 	err := ph.usecase.CreateProduct(&product)
 	if err != nil {
+		log.Println("err : ", err)
 		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Cannot insert product due to an error")
 		ctx.JSON(http.StatusInternalServerError, errResponse)
 		return
@@ -66,6 +67,7 @@ func (ph *ProductHandler) getAllProduct(ctx *gin.Context) {
 	}
 	products, err := ph.usecase.GetAllProduct(page, limit)
 	if err != nil {
+		log.Println("err :",err)
 		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to retrieve product data")
 		ctx.JSON(http.StatusInternalServerError, errResponse)
 		return

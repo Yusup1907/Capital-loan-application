@@ -165,8 +165,8 @@ func (goodsRepo *goodsRepoImpl) GetGooodsRepaymentStatus(page, limit int, repaym
 
 func (goodsRepo *goodsRepoImpl) GetLoanGoodsRepaymentsByDateRange(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, error) {
 	selectStatement := `
-	SELECT payment_date, payment
-	FROM trx_loan
+	SELECT payment_date, payment, repayment_status
+	FROM trx_goods
 	WHERE payment_date >= $1 AND payment_date <= $2
 `
 
@@ -179,7 +179,7 @@ func (goodsRepo *goodsRepoImpl) GetLoanGoodsRepaymentsByDateRange(startDate time
 	loanRepayments := []*model.LoanRepaymentModel{}
 	for rows.Next() {
 		loanRepayment := &model.LoanRepaymentModel{}
-		err := rows.Scan(&loanRepayment.PaymentDate, &loanRepayment.Payment)
+		err := rows.Scan(&loanRepayment.PaymentDate, &loanRepayment.Payment, &loanRepayment.RepaymentStatus)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning loan repayment: %w", err)
 		}

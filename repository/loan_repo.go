@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"pinjam-modal-app/model"
+	"pinjam-modal-app/utils"
 	"time"
 )
 
@@ -22,11 +23,8 @@ type loanApplicationRepo struct {
 }
 
 func (r *loanApplicationRepo) CreateLoanApplication(application *model.LoanApplicationModel) error {
-	insertStatement := `
-		INSERT INTO trx_loan (customer_id, loan_date, due_date, category_loan_id, amount, description, status, repayment_status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id
-	`
-
+	insertStatement := utils.CREATE_APLICATION_LOAN_REPO
+	application.LoanDate = time.Now()
 	err := r.db.QueryRow(insertStatement, application.CustomerId, application.LoanDate, application.DueDate, application.CategoryLoanId, application.Amount, application.Description, application.Status, application.RepaymentStatus, application.CreatedAt, application.UpdatedAt).Scan(&application.Id)
 	if err != nil {
 		return fmt.Errorf("error on loanApplicationRepo.CreateLoanApplication: %w", err)
@@ -36,7 +34,7 @@ func (r *loanApplicationRepo) CreateLoanApplication(application *model.LoanAppli
 }
 
 func (r *loanApplicationRepo) GetCustomerById(id int) (*model.ValidasiCustomerModel, error) {
-	qry := "SELECT id, nik, nokk, emergencyname, emergencycontact, last_salary FROM mst_customer WHERE id = $1"
+	qry := utils.GET_CUSTOMER_LOAN_BY_ID
 
 	customer := &model.ValidasiCustomerModel{}
 	err := r.db.QueryRow(qry, id).Scan(
@@ -54,14 +52,8 @@ func (r *loanApplicationRepo) GetCustomerById(id int) (*model.ValidasiCustomerMo
 func (r *loanApplicationRepo) GetLoanApplications(page, limit int) ([]*model.LoanApplicationJoinModel, error) {
 	offset := (page - 1) * limit
 
-	selectStatement := `
-		SELECT la.id, la.customer_id, la.loan_date, la.due_date, la.category_loan_id, la.amount, la.description, la.status, la.repayment_status, la.created_at, la.updated_at,
-			   mc.full_name, mc.address, mc.nik, mc.phone_number, mc.nokk, mc.emergencyname, mc.emergencycontact, mc.last_salary
-		FROM trx_loan la
-		INNER JOIN mst_customer mc ON la.customer_id = mc.id
-		ORDER BY la.id ASC
-		OFFSET $1 LIMIT $2
-	`
+	selectStatement := utils.GET_LOAN_APLICATION
+	
 
 	rows, err := r.db.Query(selectStatement, offset, limit)
 	if err != nil {
@@ -92,33 +84,7 @@ func (r *loanApplicationRepo) GetLoanApplications(page, limit int) ([]*model.Loa
 }
 
 func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplicationJoinModel, error) {
-	selectStatement := `SELECT 
-							la.id, 
-							la.customer_id, 
-							la.loan_date, 
-							la.due_date, 
-							la.category_loan_id, 
-							la.amount, 
-							la.description, 
-							la.status,
-							la.repayment_status, 
-							la.created_at, 
-							la.updated_at,
-							mc.full_name, 
-							mc.address, 
-							mc.nik, 
-							mc.phone_number, 
-							mc.nokk, 
-							mc.emergencyname, 
-							mc.emergencycontact, 
-							mc.last_salary
-						FROM 
-							trx_loan la
-						INNER JOIN 
-							mst_customer mc ON la.customer_id = mc.id
-						WHERE
-							la.id = $1
-						ORDER BY la.id`
+	selectStatement := utils.GET_LOAN_APLICATION_BY_ID
 
 	loan := &model.LoanApplicationJoinModel{}
 	err := r.db.QueryRow(selectStatement, id).Scan(
@@ -140,33 +106,7 @@ func (r *loanApplicationRepo) GetLoanApplicationById(id int) (*model.LoanApplica
 func (r *loanApplicationRepo) GetLoanApplicationRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanApplicationJoinModel, error) {
 	offset := (page - 1) * limit
 
-	selectStatement := `
-				SELECT 
-					la.id, 
-					la.customer_id, 
-					la.loan_date, 
-					la.due_date, 
-					la.category_loan_id, 
-					la.amount, 
-					la.description, 
-					la.status, 
-					la.repayment_status, 
-					la.created_at, 
-					la.updated_at,
-			   		mc.full_name, 
-					mc.address, 
-					mc.nik, 
-					mc.phone_number, 
-					mc.nokk, 
-					mc.emergencyname, 
-					mc.emergencycontact, 
-					mc.last_salary
-				FROM 
-					trx_loan la
-				INNER JOIN mst_customer mc ON la.customer_id = mc.id
-				WHERE la.repayment_status = $3
-				ORDER BY la.id ASC
-				OFFSET $1 LIMIT $2`
+	selectStatement := utils.GET_LOAN_APLCATION_REPAYMENT_STATUS
 
 	rows, err := r.db.Query(selectStatement, offset, limit, repaymentStatus)
 	if err != nil {
@@ -197,7 +137,7 @@ func (r *loanApplicationRepo) GetLoanApplicationRepaymentStatus(page, limit int,
 }
 
 func (r *loanApplicationRepo) LoanRepayment(id int, repayment *model.LoanRepaymentModel) error {
-	updateStatment := "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3::loan_status, updated_at = $4 WHERE id = $5"
+	updateStatment := utils.LOAN_REPAYMENT
 	_, err := r.db.Exec(updateStatment, repayment.PaymentDate, repayment.Payment, model.StatusEnum(repayment.RepaymentStatus), repayment.UpdatedAt, id)
 	if err != nil {
 		return fmt.Errorf("error on loanApplicationRepo.LoanRepayment() : %w", err)
@@ -206,11 +146,7 @@ func (r *loanApplicationRepo) LoanRepayment(id int, repayment *model.LoanRepayme
 }
 
 func (r *loanApplicationRepo) GetLoanRepaymentsByDateRange(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, error) {
-	selectStatement := `
-		SELECT payment_date, payment
-		FROM trx_loan
-		WHERE payment_date >= $1 AND payment_date <= $2
-	`
+	selectStatement := utils.GET_LOAN_REPAYMENT_BY_DATE_RANGE
 
 	rows, err := r.db.Query(selectStatement, startDate, endDate)
 	if err != nil {
