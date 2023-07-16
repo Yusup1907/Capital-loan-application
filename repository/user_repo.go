@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"pinjam-modal-app/model"
+	"sync"
 	"time"
 
 	"pinjam-modal-app/utils"
@@ -14,26 +15,31 @@ type UserRepo interface {
 	CreateUser(user *model.UserModel) error
 	GetUserByUsername(string) (*model.UserModel, error)
 	GetUserByEmail(email string) (*model.UserModel, error)
+	GetUserByUsernameOrEmail(identifier string) (*model.UserModel, error)
 	GetUserById(int) (*model.UserModel, error)
+	LogoutUser(userId int) error
 	GetAllUser() (*[]model.UserModel, error)
 	UpadateUser(usr *model.UserModel) error
 	DeleteUser(*model.UserModel) error
 }
 type userRepoImpl struct {
-	db *sql.DB
+	db             *sql.DB
+	loggedOutUsers map[int]bool
+	mutex          sync.Mutex
 }
 
+var (
+	// ErrUserNotFound digunakan untuk menandakan pengguna tidak ditemukan dalam database.
+	ErrUserNotFound = errors.New("User not found")
+)
+
 func (r *userRepoImpl) CreateUser(user *model.UserModel) error {
+	insertStatement := "INSERT INTO mst_user (user_name, email, password, roles_name, is_active, phone_number, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
+
 	user.CreatedAt = time.Now()
 	user.UpdatedAt = time.Now()
 
-	stmt, err := r.db.Prepare("INSERT INTO mst_user (user_name, email, password, roles_name, is_active, phone_number, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)")
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	_, err = stmt.Exec(user.UserName, user.Email, user.Password, user.RolesName, user.IsActive, user.PhoneNumber, user.CreatedAt, user.UpdatedAt)
+	_, err := r.db.Exec(insertStatement, user.UserName, user.Email, user.Password, user.RolesName, user.IsActive, user.PhoneNumber, user.CreatedAt, user.UpdatedAt)
 	if err != nil {
 		return err
 	}
@@ -73,6 +79,32 @@ func (r *userRepoImpl) GetUserByEmail(email string) (*model.UserModel, error) {
 	}
 
 	return user, nil
+}
+
+func (r *userRepoImpl) GetUserByUsernameOrEmail(identifier string) (*model.UserModel, error) {
+	selectStatement := "SELECT id, user_name, email, password, roles_name, is_active, phone_number, created_at, updated_at FROM mst_user WHERE user_name = $1 OR email = $2"
+
+	row := r.db.QueryRow(selectStatement, identifier, identifier)
+
+	user := &model.UserModel{}
+	err := row.Scan(&user.Id, &user.UserName, &user.Email, &user.Password, &user.RolesName, &user.IsActive, &user.PhoneNumber, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("GetUserByUsernameOrEmail() : %w", err)
+	}
+
+	return user, nil
+}
+
+func (r *userRepoImpl) LogoutUser(userId int) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	// Tandai pengguna sebagai logout
+	r.loggedOutUsers[userId] = true
+	return nil
 }
 
 func (usrRepo *userRepoImpl) UpadateUser(usr *model.UserModel) error {
@@ -142,6 +174,7 @@ func (usrRepo *userRepoImpl) DeleteUser(usr *model.UserModel) error {
 
 func NewUserRepo(db *sql.DB) UserRepo {
 	return &userRepoImpl{
-		db: db,
+		db:             db,
+		loggedOutUsers: make(map[int]bool),
 	}
 }
