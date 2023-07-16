@@ -8,6 +8,7 @@ import (
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/usecase"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -75,51 +76,51 @@ func (h *UserHandler) loginUser(c *gin.Context) {
 // 	c.JSON(http.StatusOK, gin.H{"message": "User logged out"})
 // }
 
-// func (usrHandler *UserHandler) UpadteUser(ctx *gin.Context) {
-// 	usr := &model.UserModel{}
-// 	err := ctx.ShouldBindJSON(&usr)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{
-// 			"success":      false,
-// 			"errorMessage": "Invalid JSON data",
-// 		})
-// 		return
-// 	}
+func (usrHandler *UserHandler) UpdateUser(ctx *gin.Context) {
+	usr := &model.UserModel{}
+	err := ctx.ShouldBindJSON(&usr)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "Invalid JSON data",
+		})
+		return
+	}
 
-// 	if len(usr.UserName) > 15 {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{
-// 			"success":      false,
-// 			"errorMessage": "Panjang Nama tidak boleh lebih dari 15 karakter",
-// 		})
-// 		return
-// 	}
-// 	// Mengisi nilai createdAt dan updatedAt
-// 	now := time.Now()
-// 	usr.CreatedAt = now
-// 	usr.UpdatedAt = now
+	if len(usr.UserName) > 15 {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"success":      false,
+			"errorMessage": "Panjang Nama tidak boleh lebih dari 15 karakter",
+		})
+		return
+	}
+	// Mengisi nilai createdAt dan updatedAt
+	now := time.Now()
+	usr.CreatedAt = now
+	usr.UpdatedAt = now
 
-// 	err = usrHandler.usrUsecase.UpadateUser(usr)
-// 	if err != nil {
-// 		if appErr, ok := err.(*apperror.AppError); ok {
-// 			fmt.Printf("UserHandler.InsertUser() 1: %v\n", appErr)
-// 			ctx.JSON(http.StatusInternalServerError, gin.H{
-// 				"success":      false,
-// 				"errorMessage": appErr.Error(), // Menggunakan appErr.Error() untuk mendapatkan pesan error
-// 			})
-// 		} else {
-// 			fmt.Printf("UserHandler.InsertUser() 2: %v\n", err)
-// 			ctx.JSON(http.StatusInternalServerError, gin.H{
-// 				"success":      false,
-// 				"errorMessage": "Terjadi kesalahan ketika menyimpan data User",
-// 			})
-// 		}
-// 		return
-// 	}
+	err = usrHandler.usrUsecase.UpdateUser(usr)
+	if err != nil {
+		if appErr, ok := err.(*apperror.AppError); ok {
+			fmt.Printf("UserHandler.InsertUser() 1: %v\n", appErr)
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": appErr.Error(), // Menggunakan appErr.Error() untuk mendapatkan pesan error
+			})
+		} else {
+			fmt.Printf("UserHandler.InsertUser() 2: %v\n", err)
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"success":      false,
+				"errorMessage": "Terjadi kesalahan ketika menyimpan data User",
+			})
+		}
+		return
+	}
 
-// 	ctx.JSON(http.StatusOK, gin.H{
-// 		"success": true,
-// 	})
-// }
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+	})
+}
 
 func (usrHandler *UserHandler) GetUserById(ctx *gin.Context) {
 	id := ctx.Param("id")
@@ -219,9 +220,9 @@ func NewUserHandler(srv *gin.Engine, usrUsecase usecase.UserUsecase) *UserHandle
 	srv.POST("/register", usrHandler.registerUser)
 	srv.POST("/login", usrHandler.loginUser)
 	// srv.POST("/logout", usrHandler.logoutUser)
-	// srv.GET("/user/id/:id", usrHandler.GetUserById)
-	// srv.PUT("/user", usrHandler.UpadteUser)
-	// srv.DELETE("/user/:id", usrHandler.DeleteUser)
+	srv.GET("/user/id/:id", usrHandler.GetUserById)
+	srv.PUT("/user", usrHandler.UpdateUser)
+	srv.DELETE("/user/:id", usrHandler.DeleteUser)
 
 	return usrHandler
 }

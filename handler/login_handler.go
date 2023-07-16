@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"net/http"
 	"pinjam-modal-app/usecase"
 
 	"github.com/gin-contrib/sessions"
@@ -30,22 +31,22 @@ type LoginHandler struct {
 // 	c.JSON(http.StatusOK, gin.H{"token": token})
 // }
 
-// func (l *LoginHandler) Logout(c *gin.Context) {
-// 	err := l.LoginUsecase.Logout(c) // Sertakan konteks c saat memanggil Logout
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
+func (l *LoginHandler) Logout(c *gin.Context) {
+	err := l.LoginUsecase.Logout(c) // Sertakan konteks c saat memanggil Logout
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-// 	session := sessions.Default(c)
-// 	session.Clear()
-// 	session.Save()
+	session := sessions.Default(c)
+	session.Clear()
+	session.Save()
 
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"status":  true,
-// 		"message": "Logout successful",
-// 	})
-// }
+	c.JSON(http.StatusOK, gin.H{
+		"status":  true,
+		"message": "Logout successful",
+	})
+}
 
 func NewLoginHandler(router *gin.Engine, loginUsecase usecase.LoginUsecase) {
 	// Inisialisasi cookie store
@@ -58,12 +59,12 @@ func NewLoginHandler(router *gin.Engine, loginUsecase usecase.LoginUsecase) {
 	})
 
 	//Inisialisasi handler dengan penggunaan sesi
-	// loginHandler := &LoginHandler{
-	// 	LoginUsecase: loginUsecase,
-	// }
+	loginHandler := &LoginHandler{
+		LoginUsecase: loginUsecase,
+	}
 
 	// router.Use(sessions.Sessions("session-name", store))
 
 	// router.POST("/login", loginHandler.Login)
-	// router.POST("/logout", loginHandler.Logout)
+	router.POST("/logout", loginHandler.Logout)
 }

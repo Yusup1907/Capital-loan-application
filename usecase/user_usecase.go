@@ -19,6 +19,7 @@ type UserUsecase interface {
 	GetUserById(int) (*model.UserModel, error)
 	GetAllUser() (*[]model.UserModel, error)
 	DeleteUser(*model.UserModel) error
+	UpdateUser(user *model.UserModel) error
 }
 
 type userUsecaseImpl struct {
@@ -63,6 +64,40 @@ func (uc *userUsecaseImpl) RegisterUser(user *model.UserModel) error {
 
 	// Buat pengguna baru
 	err = uc.userRepo.CreateUser(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+func (uc *userUsecaseImpl) UpdateUser(user *model.UserModel) error {
+	// Validate email uniqueness
+	existingUser, err := uc.userRepo.GetUserByEmail(user.Email)
+	if err == nil && existingUser != nil && existingUser.Id != user.Id {
+		return errors.New("Email is already taken")
+	}
+
+	// Validate password strength
+	if !utils.IsValidPassword(user.Password) {
+		return errors.New("Password is not strong enough")
+	}
+
+	// Validate email address
+	if !utils.IsValidEmail(user.Email) {
+		return errors.New("Invalid email address")
+	}
+
+	// Generate password hash if a new password is provided
+	if user.Password != "" {
+		passHash, err := GeneratePasswordHash(user.Password)
+		if err != nil {
+			return fmt.Errorf("Failed to generate password hash: %w", err)
+		}
+		user.Password = passHash
+	}
+
+	// Update the user
+	err = uc.userRepo.UpdateUser(user)
 	if err != nil {
 		return err
 	}

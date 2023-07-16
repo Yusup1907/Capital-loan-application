@@ -19,7 +19,7 @@ type UserRepo interface {
 	GetUserById(int) (*model.UserModel, error)
 	LogoutUser(userId int) error
 	GetAllUser() (*[]model.UserModel, error)
-	UpadateUser(usr *model.UserModel) error
+	UpdateUser(usr *model.UserModel) error
 	DeleteUser(*model.UserModel) error
 }
 type userRepoImpl struct {
@@ -107,7 +107,7 @@ func (r *userRepoImpl) LogoutUser(userId int) error {
 	return nil
 }
 
-func (usrRepo *userRepoImpl) UpadateUser(usr *model.UserModel) error {
+func (usrRepo *userRepoImpl) UpdateUser(usr *model.UserModel) error {
 	isActiveValue := 0
 	if usr.IsActive {
 		isActiveValue = 1
