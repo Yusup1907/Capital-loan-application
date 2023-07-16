@@ -10,9 +10,11 @@ import (
 
 type GoodsUsecase interface {
 	InsertGoods(*model.GoodsModel) error
-	GetGoodsById(int) (*model.LoanGoodsModel, error)
 	GetAllTrxGoods(page, limit int) ([]*model.LoanGoodsModel, error)
+	GetGoodsById(int) (*model.LoanGoodsModel, error)
 	GoodsRepayment(int, *model.LoanRepaymentModel) error
+	GetGooodsRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanGoodsModel, error)
+	GenerateIncomeReport(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, float64, error)
 }
 
 type goodsUsecaseImpl struct {
@@ -86,6 +88,32 @@ func (goodUsecase *goodsUsecaseImpl) GoodsRepayment(id int, repayment *model.Loa
 
 	return nil
 }
+
+func (goodsUsecase *goodsUsecaseImpl)  GetGooodsRepaymentStatus(page, limit int, repaymentStatus model.StatusEnum) ([]*model.LoanGoodsModel, error){
+	if page <= 0 {
+		page = 1
+	}
+	if limit <= 0 {
+		limit = 10
+	}
+
+	return goodsUsecase.goodsRepo.GetGooodsRepaymentStatus(page, limit, repaymentStatus)
+}
+
+func (goodsUsecase *goodsUsecaseImpl) GenerateIncomeReport(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, float64, error) {
+	loanRepayments, err := goodsUsecase.goodsRepo.GetLoanGoodsRepaymentsByDateRange(startDate, endDate)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to retrieve loan repayments: %w", err)
+	}
+
+	totalIncome := 0.0
+	for _, repayment := range loanRepayments {
+		totalIncome += repayment.Payment
+	}
+
+	return loanRepayments, totalIncome, nil
+}
+
 
 func NewGoodsUsecase(goodsRepo repository.GoodsRepo) GoodsUsecase {
 	return &goodsUsecaseImpl{
