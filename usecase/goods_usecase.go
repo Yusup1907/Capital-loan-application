@@ -39,7 +39,6 @@ func (goodsUsecase *goodsUsecaseImpl) InsertGoods(goods *model.GoodsModel) error
 		fmt.Println("Silakan lengkapi data customer")
 	}
 
-
 	err = goodsUsecase.goodsRepo.InsertGoods(goods)
 	if err != nil {
 		return fmt.Errorf("failed to insert goods: %v", err)

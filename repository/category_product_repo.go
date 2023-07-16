@@ -77,7 +77,7 @@ func (cpRepo *categoryProductRepoImpl) GetAllCategoryProduct() ([]model.Category
 }
 
 func (cpRepo *categoryProductRepoImpl) UpdateCategoryProduct(id int , cp *model.CategoryProductModel) error{
-	qryId := utils.UPDATE_CATEGORY_PRODUCT
+	qryId := utils.GET_CATEGORY_PRODUCT_UPDATE_ID
 	err := cpRepo.db.QueryRow(qryId, cp.Id).Scan(&cp.Id)
 	if err != nil{
 		return fmt.Errorf("data category product not found")

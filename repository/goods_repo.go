@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"pinjam-modal-app/model"
 	"pinjam-modal-app/utils"
@@ -27,23 +28,47 @@ func (goodsRepo *goodsRepoImpl) InsertGoods(goods *model.GoodsModel) error {
 	goods.CreateAt = time.Now()
 	goods.LoadDate = time.Now()
 
-	product := &model.ProductModel{}
-	err := goodsRepo.db.QueryRow("SELECT price FROM mst_product WHERE id = $1", goods.ProductId).Scan(&product.Price)
+	tx, err := goodsRepo.db.Begin()
 	if err != nil {
+		return fmt.Errorf("gagal memulai transaksi: %w", err)
+	}
+
+	product := &model.ProductModel{}
+	err = tx.QueryRow("SELECT price, stok FROM mst_product WHERE id = $1", goods.ProductId).Scan(&product.Price, &product.Stok)
+	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("gagal mendapatkan harga produk: %w", err)
 	}
 
+	if product.Stok < goods.Quantity {
+		tx.Rollback()
+		return errors.New("stok produk tidak mencukupi")
+	}
+
 	goods.Amount = float64(goods.Quantity) * product.Price
-	_, err = goodsRepo.db.Exec(insertQuery, goods.CustomerId, goods.LoadDate, goods.PaymentDate, goods.DueDate, goods.CategoryIdLoan, goods.ProductId, goods.Quantity, product.Price, goods.Amount, goods.CreateAt, goods.Status, goods.RepaymentStatus)
+	_, err = tx.Exec(insertQuery, goods.CustomerId, goods.LoadDate, goods.PaymentDate, goods.DueDate, goods.CategoryIdLoan, goods.ProductId, goods.Quantity, product.Price, goods.Amount, goods.CreateAt, goods.Status, goods.RepaymentStatus)
 	if err != nil {
+		tx.Rollback()
 		return fmt.Errorf("gagal memasukkan data goods: %w", err)
+	}
+
+	newStock := product.Stok - goods.Quantity
+	_, err = tx.Exec("UPDATE mst_product SET stok = $1 WHERE id = $2", newStock, goods.ProductId)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("gagal memperbarui stok produk: %w", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("gagal melakukan commit transaksi: %w", err)
 	}
 
 	return nil
 }
 
 func (goodsRepo *goodsRepoImpl) GetCustomerById(id int) (*model.ValidasiCustomerModel, error) {
-	qry := utils.GET_CUSTOMER_BY_ID
+	qry := utils.GET_CUSTOMER_LOAN_BY_ID
 
 	customer := &model.ValidasiCustomerModel{}
 	err := goodsRepo.db.QueryRow(qry, id).Scan(
@@ -139,7 +164,11 @@ func (goodsRepo *goodsRepoImpl) GetGooodsRepaymentStatus(page, limit int, repaym
 }
 
 func (goodsRepo *goodsRepoImpl) GetLoanGoodsRepaymentsByDateRange(startDate time.Time, endDate time.Time) ([]*model.LoanRepaymentModel, error) {
-	selectStatement := utils.GET_GOODS_REPAYMENT_BY_DATE_RANGE
+	selectStatement := `
+	SELECT payment_date, payment
+	FROM trx_loan
+	WHERE payment_date >= $1 AND payment_date <= $2
+`
 
 	rows, err := goodsRepo.db.Query(selectStatement, startDate, endDate)
 	if err != nil {
