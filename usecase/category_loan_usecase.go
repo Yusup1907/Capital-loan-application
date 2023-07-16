@@ -39,6 +39,9 @@ func (uc *CategoryLoanUsecaseImpl) GetAllCategoryLoan() ([]*model.CategoryLoanMo
 }
 
 func (uc *CategoryLoanUsecaseImpl) InsertCategoryLoan(ctr *model.CategoryLoanModel) error {
+	if err := ctr.Validate(); err != nil {
+		return err
+	}
 	categoryLoanByName, err := uc.ctrRepo.GetCategoryLoanByName(ctr.CategoryLoanName)
 	if err != nil {
 		return fmt.Errorf("CategoryLoanUsecaseImpl.InsertCategoryLoan(): %w", err)
@@ -52,6 +55,9 @@ func (uc *CategoryLoanUsecaseImpl) InsertCategoryLoan(ctr *model.CategoryLoanMod
 }
 
 func (uc *CategoryLoanUsecaseImpl) UpdateCategoryLoan(id int, ctr *model.CategoryLoanModel) error {
+	if err := ctr.Validate(); err != nil {
+		return err
+	}
 	// Periksa keberadaan kategori pinjaman dengan nama yang sama
 	existingCategoryLoan, err := uc.ctrRepo.GetCategoryLoanById(id)
 	if err != nil {
