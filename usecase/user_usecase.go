@@ -16,7 +16,6 @@ import (
 type UserUsecase interface {
 	RegisterUser(user *model.UserModel) error
 	Login(email, password string) (string, error)
-	LogoutUser(userID int) error
 	GetUserById(int) (*model.UserModel, error)
 	GetAllUser() (*[]model.UserModel, error)
 	DeleteUser(*model.UserModel) error
@@ -99,14 +98,6 @@ func (uc *userUsecaseImpl) Login(email, password string) (string, error) {
 	}
 
 	return token, nil
-}
-
-func (uc *userUsecaseImpl) LogoutUser(userID int) error {
-	err := uc.userRepo.LogoutUser(userID)
-	if err != nil {
-		return fmt.Errorf("Failed to logout user: %w", err)
-	}
-	return nil
 }
 
 func (usrUsecase *userUsecaseImpl) GetUserById(id int) (*model.UserModel, error) {

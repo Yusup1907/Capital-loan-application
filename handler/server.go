@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"pinjam-modal-app/config"
 	"pinjam-modal-app/manager"
 	"pinjam-modal-app/middleware"
 
@@ -31,7 +32,12 @@ func (s *server) Run() {
 }
 
 func NewServer() Server {
-	infra := manager.NewInfraManager()
+	c, err := config.NewConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	infra := manager.NewInfraManager(c)
 	repo := manager.NewRepoManager(infra)
 	usecase := manager.NewUsecaseManager(repo)
 

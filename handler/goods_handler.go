@@ -230,6 +230,7 @@ func (goodsHandler *goodsHandlerImpl) generateIncomeReport(ctx *gin.Context) {
 
 	loanRepayments, totalIncome, err := goodsHandler.goodsUsecase.GenerateIncomeReport(startDate, endDate)
 	if err != nil {
+		log.Println("err :", err)
 		errResponse := apperror.NewAppError(http.StatusInternalServerError, "Failed to generate income report")
 		ctx.JSON(http.StatusInternalServerError, errResponse)
 		return

@@ -35,20 +35,20 @@ package middleware
 
 // 				tokenString := splitToken[1]
 
-// 				// Validasi token
-// 				token, err := validateToken(tokenString)
-// 				if err != nil {
-// 					c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-// 					c.Abort()
-// 					return
-// 				}
+// Validasi token
+// token, err := validateToken(tokenString)
+// if err != nil {
+// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 	c.Abort()
+// 	return
+// }
 
-// 				// Periksa apakah pengguna telah logout
-// 				if isTokenLoggedOut(tokenString) {
-// 					c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-// 					c.Abort()
-// 					return
-// 				}
+// // Periksa apakah pengguna telah logout
+// if isTokenLoggedOut(tokenString) {
+// 	c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+// 	c.Abort()
+// 	return
+// }
 
 // 				// Setel data pengguna pada konteks Gin
 // 				user, err := getUserFromToken(token)
@@ -87,16 +87,13 @@ package middleware
 // 	// Implementasi logika untuk memeriksa izin akses berdasarkan peran pengguna
 // 	// Misalnya, Anda dapat menggunakan peta (map) yang memetakan peran pengguna ke rute yang diizinkan
 
-// 	roleAccessMap := map[string][]string{
-// 		"admin":   {"/admin", "/users"},
-// 		"manager": {"/products", "/orders"},
-// 		"user":    {"/profile", "/cart"},
-// 	}
+// 	return token, nil
+// }
 
-// 	allowedRoutes, ok := roleAccessMap[role]
-// 	if !ok {
-// 		return false
-// 	}
+// func isTokenLoggedOut(tokenString string) bool {
+// 	// Periksa apakah token telah logout menggunakan repositori LogoutRepo
+// 	return userRepo.IsTokenLoggedOut(tokenString)
+// }
 
 // 	for _, route := range allowedRoutes {
 // 		if route == path {

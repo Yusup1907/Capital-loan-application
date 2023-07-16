@@ -26,7 +26,7 @@ func (cstRepo *customerRepoImpl) AddCustomer(cst *model.CustomerModel) error {
 
 	qry := utils.ADD_CUSTOMER
 
-	_, err := cstRepo.db.Exec(qry, cst.Id, cst.FullName, cst.Address, cst.NIK, cst.Phone, cst.UserId, cst.NoKK, cst.EmergencyContact, cst.EmergencyName, cst.LastSalary, time.Now())
+	err := cstRepo.db.QueryRow(qry, cst.FullName, cst.Address, cst.NIK, cst.Phone, cst.UserId, cst.NoKK, cst.EmergencyContact, cst.EmergencyName, cst.LastSalary, time.Now()).Scan(&cst.Id)
 	if err != nil {
 		return fmt.Errorf("error on customerRepoImpl.AddCustomer() : %w", err)
 	}

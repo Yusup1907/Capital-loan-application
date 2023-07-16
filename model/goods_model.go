@@ -39,7 +39,7 @@ type LoanGoodsModel struct{
 		NIK              string     `json:"nik"`
 		FullName         string     `json:"full_name"`
 		Address          string     `json:"address"`
-		PhoneNumber      string     `json:"phone_number"`
+		PhoneNumber      string     `json:"phone"`
 		EmergencyName    string     `json:"emergencyname"`
 		EmergencyContact string     `json:"emergencycontact"`
 		LastSalary       float64    `json:"last_salary"`

@@ -58,7 +58,7 @@ const (
 	GET_CATEGORY_PRODUCT_BY_ID     = "SELECT id, category_product_name, created_at, updated_at FROM category_product WHERE id = $1"
 	GET_CATEGORY_PRODUCT_BY_NAME   = "SELECT id, category_product_name, created_at, updated_at FROM category_product WHERE category_product_name = $1"
 
-	ADD_CUSTOMER           = "INSERT INTO mst_customer(id, full_name, address, nik, phone, user_id, no_kk,emergency_contact, emergency_name,  last_salary, created_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+	ADD_CUSTOMER           = "INSERT INTO mst_customer(full_name, address, nik, phone, user_id, no_kk,emergency_contact, emergency_name,  last_salary, created_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id"
 	GET_CUSTOMER_BY_ID     = "SELECT id, full_name, address, nik, phone, user_id, created_at, updated_at, no_kk, emergency_name, emergency_contact, last_salary FROM mst_customer WHERE id = $1"
 	GET_ALL_CUSTOMER       = "SELECT * FROM mst_customer ORDER BY id"
 	UPDATE_CUSTOMER        = "UPDATE mst_customer SET full_name=$1, address=$2, phone=$3, updated_at=$4,  emergency_name=$5, emergency_contact=$6, last_salary=$7 WHERE id=$8"
@@ -67,8 +67,8 @@ const (
 	GET_CUSTOMER_BY_NUMBER = "SELECT id FROM mst_customer WHERE phone = $1"
 
 	CREATE_APLICATION_LOAN_REPO = `INSERT INTO trx_loan (customer_id, loan_date, due_date, category_loan_id, amount, description, status, repayment_status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`
-	GET_CUSTOMER_LOAN_BY_ID     = "SELECT id, nik, nokk, emergencyname, emergencycontact, last_salary FROM mst_customer WHERE id = $1"
-	GET_LOAN_APLICATION         = `SELECT la.id, la.customer_id, la.loan_date, la.due_date, la.category_loan_id, la.amount, la.description, la.status, la.repayment_status, la.created_at, la.updated_at, mc.full_name, mc.address, mc.nik, mc.phone_number, mc.nokk, mc.emergencyname, mc.emergencycontact, mc.last_salary FROM trx_loan la INNER JOIN mst_customer mc ON la.customer_id = mc.id ORDER BY la.id ASC OFFSET $1 LIMIT $2`
+	GET_CUSTOMER_LOAN_BY_ID     = "SELECT id, nik, no_kk, emergency_name, emergency_contact, last_salary FROM mst_customer WHERE id = $1"
+	GET_LOAN_APLICATION         = `SELECT la.id, la.customer_id, la.loan_date, la.due_date, la.category_loan_id, la.amount, la.description, la.status, la.repayment_status, la.created_at, la.updated_at, mc.full_name, mc.address, mc.nik, mc.phone, mc.no_kk, mc.emergency_name, mc.emergency_contact, mc.last_salary FROM trx_loan la INNER JOIN mst_customer mc ON la.customer_id = mc.id ORDER BY la.id ASC OFFSET $1 LIMIT $2`
 	GET_LOAN_APLICATION_BY_ID   = `SELECT 
 	la.id, 
 	la.customer_id, 
@@ -84,10 +84,10 @@ const (
 	mc.full_name, 
 	mc.address, 
 	mc.nik, 
-	mc.phone_number, 
-	mc.nokk, 
-	mc.emergencyname, 
-	mc.emergencycontact, 
+	mc.phone, 
+	mc.no_kk, 
+	mc.emergency_name, 
+	mc.emergency_contact, 
 	mc.last_salary
 FROM 
 	trx_loan la
@@ -111,10 +111,10 @@ ORDER BY la.id`
 			   		mc.full_name, 
 					mc.address, 
 					mc.nik, 
-					mc.phone_number, 
-					mc.nokk, 
-					mc.emergencyname, 
-					mc.emergencycontact, 
+					mc.phone, 
+					mc.no_kk, 
+					mc.emergency_name, 
+					mc.emergency_contact, 
 					mc.last_salary
 				FROM 
 					trx_loan la
@@ -122,21 +122,23 @@ ORDER BY la.id`
 				WHERE la.repayment_status = $3
 				ORDER BY la.id ASC
 				OFFSET $1 LIMIT $2`
-	LOAN_REPAYMENT = "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3::loan_status, updated_at = $4 WHERE id = $5"
+	LOAN_REPAYMENT = "UPDATE trx_loan SET payment_date = $1, payment = $2, repayment_status = $3::status_enum, updated_at = $4 WHERE id = $5"
+	GET_LOAN_REPAYMENT_BY_DATE_RANGE = "SELECT payment_date, payment FROM trx_loan WHERE payment_date >= $1 AND payment_date <= $2"
 
-	INSERT_USER       = "INSERT INTO mst_user(id, user_name, email, password, roles_name, is_active, phone_number, created_at, updated_at ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)"
-	UPDATE_USER       = "UPDATE mst_user SET user_name = $1,  email = $2, password = $3, roles_name = $4, is_active = $5, phone_number = $6 ,created_at = $7, updated_at = $8 WHERE id = $9"
+	INSERT_USER       = "INSERT INTO mst_user(id, user_name, email, password, roles_name, is_active, phone, created_at, updated_at ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+	UPDATE_USER       = "UPDATE mst_user SET user_name = $1,  email = $2, password = $3, roles_name = $4, is_active = $5, phone = $6 ,created_at = $7, updated_at = $8 WHERE id = $9"
 	DELETE_USER       = "DELETE FROM mst_user WHERE id = $1"
-	GET_ALL_USER      = "SELECT id,user_name, email, password, roles_name, is_active, phone_number ,created_at, updated_at FROM mst_user ORDER BY id ASC"
-	GET_USER_BY_NAME  = "SELECT id,user_name, email, password, roles_name, is_active, phone_number ,created_at, updated_at FROM mst_user WHERE user_name = $1"
-	GET_USER_BY_ID    = "SELECT id, user_name, email, password, roles_name, is_active, phone_number ,created_at, updated_at FROM mst_user WHERE id = $1"
-	GET_USER_BY_EMAIL = "SELECT id,user_name, email, password, roles_name, is_active, phone_number,created_at, updated_at  FROM mst_user WHERE email = $1"
+	GET_ALL_USER      = "SELECT id,user_name, email, password, roles_name, is_active, phone ,created_at, updated_at FROM mst_user ORDER BY id ASC"
+	GET_USER_BY_NAME  = "SELECT id,user_name, email, password, roles_name, is_active, phone ,created_at, updated_at FROM mst_user WHERE user_name = $1"
+	GET_USER_BY_ID    = "SELECT id, user_name, email, password, roles_name, is_active, phone ,created_at, updated_at FROM mst_user WHERE id = $1"
+	GET_USER_BY_EMAIL = "SELECT id,user_name, email, password, roles_name, is_active, phone,created_at, updated_at  FROM mst_user WHERE email = $1"
 
 	INSERT_GOODS                      = "INSERT INTO trx_goods (customer_id, loan_date, payment_date, due_date, category_loan_id, product_id, quantity, price, amount, created_at, status, repayment_status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
-	GET_GOODS_BY_ID                   = "SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.deskripsi, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone_number, c.nik, c.nokk, c.emergencyname, c.emergencyphone, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id WHERE g.id = $1"
-	GET_ALL_TRX_GOODS                 = `SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.deskripsi, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone_number, c.nik, c.nokk, c.emergencyname, c.emergencyphone, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id ORDER BY g.id ASC OFFSET $1 LIMIT $2`
+	GET_GOODS_BY_ID                   = "SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.description, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone, c.nik, c.no_kk, c.emergency_name, c.emergency_contact, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id WHERE g.id = $1"
+	GET_ALL_TRX_GOODS                 = `SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.description, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone, c.nik, c.no_kk, c.emergency_name, c.emergency_contact, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id ORDER BY g.id ASC OFFSET $1 LIMIT $2`
 	UPDATE_GOODS_REPAYMENT            = "UPDATE trx_goods SET payment_date = $1, payment = $2, repayment_status = $3, updated_at = $4 WHERE id = $5"
-	GET_GOODS_REPAYMENT_STATUS        = `SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.deskripsi, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone_number, c.nik, c.nokk, c.emergencyname, c.emergencyphone, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id WHERE g.repayment_status = $3 ORDER BY g.id ASC OFFSET $1 LIMIT $2`
-	GET_GOODS_REPAYMENT_BY_DATE_RANGE = ` SELECT payment_date, payment FROM trx_loanWHERE payment_date >= $1 AND payment_date <= $2`
+	GET_GOODS_REPAYMENT_STATUS        = `SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.description, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone, c.nik, c.no_kk, c.emergency_name, c.emergency_contact, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id WHERE g.repayment_status = $3 ORDER BY g.id ASC OFFSET $1 LIMIT $2`
+	GET_GOODS_REPAYMENT_BY_DATE_RANGE = ` SELECT payment_date, payment FROM trx_goods WHERE payment_date >= $1 AND payment_date <= $2`
+
 )
 

@@ -2,36 +2,44 @@ package manager
 
 import (
 	"database/sql"
-	"log"
+	"fmt"
 	"sync"
+
+	"pinjam-modal-app/config"
 
 	_ "github.com/lib/pq"
 )
-
-var onceLoadDB sync.Once
 
 type InfraManager interface {
 	GetDB() *sql.DB
 }
 
 type infraManager struct {
-	db *sql.DB
+	db  *sql.DB
+	cfg config.Config
 }
 
-func (im *infraManager) GetDB() *sql.DB {
+var onceLoadDB sync.Once
+
+func (i *infraManager) initDb() {
+	psqlconn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", i.cfg.Host, i.cfg.Port, i.cfg.User, i.cfg.Password, i.cfg.Name)
 	onceLoadDB.Do(func() {
-
-		db, err := sql.Open("postgres", "user=postgres host=localhost password=12345 dbname=modalkita sslmode=disable")
-
+		db, err := sql.Open("postgres", psqlconn)
 		if err != nil {
-			log.Fatal("Cannot start app, error when connect to DB", err.Error())
+			panic(err)
 		}
-
-		im.db = db
+		i.db = db
 	})
-	return im.db
+	fmt.Println("DB Connected")
+}
+func (i *infraManager) GetDB() *sql.DB {
+	return i.db
 }
 
-func NewInfraManager() InfraManager {
-	return &infraManager{}
+func NewInfraManager(config config.Config) InfraManager {
+	infra := infraManager{
+		cfg: config,
+	}
+	infra.initDb()
+	return &infra
 }
