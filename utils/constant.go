@@ -139,3 +139,4 @@ ORDER BY la.id`
 	GET_GOODS_REPAYMENT_STATUS        = `SELECT g.id, g.customer_id, g.loan_date, g.due_date, g.category_loan_id, g.product_id, p.product_name, g.quantity , p.price , g.amount, p.deskripsi, g.status, g.repayment_status, g.created_at, g.updated_at, c.full_name, c.address, c.phone_number, c.nik, c.nokk, c.emergencyname, c.emergencyphone, c.last_salary FROM trx_goods g JOIN mst_customer c ON g.customer_id = c.id JOIN mst_product p ON g.product_id = p.id WHERE g.repayment_status = $3 ORDER BY g.id ASC OFFSET $1 LIMIT $2`
 	GET_GOODS_REPAYMENT_BY_DATE_RANGE = ` SELECT payment_date, payment FROM trx_loanWHERE payment_date >= $1 AND payment_date <= $2`
 )
+

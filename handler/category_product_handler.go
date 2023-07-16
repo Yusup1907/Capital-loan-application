@@ -196,10 +196,10 @@ func NewCategoryProductHandler(r *gin.Engine, cpUsecase usecase.CategoryProductU
 		cpUsecase: cpUsecase,
 	}
 
-	r.POST("/category_product", handler.InsertCategoryProduct)
-	r.GET("/category_product/:id", handler.GetCategoryProductById)
-	r.GET("/category_product", handler.GetAllCategoryProduct)
-	r.PUT("/category_product", handler.UpdateCategoryProduct)
-	r.DELETE("/category_product/:id", handler.DeleteCategoryProduct)
+	r.POST("/category-product", handler.InsertCategoryProduct)
+	r.GET("/category-product/:id", handler.GetCategoryProductById)
+	r.GET("/category-product", handler.GetAllCategoryProduct)
+	r.PUT("/category-product", handler.UpdateCategoryProduct)
+	r.DELETE("/category-product/:id", handler.DeleteCategoryProduct)
 	return handler
 }

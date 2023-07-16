@@ -253,8 +253,7 @@ func NewGoodsHandler(srv *gin.Engine,goodsUsecase usecase.GoodsUsecase) GoodsHan
 	srv.POST("/goods", ghandler.InsertGoods)
 	srv.GET("/goods/:id", ghandler.GetGoodsById)
 	srv.GET("/goods", ghandler.GetAllTrxGoods)
-	srv.PUT("/goods/:id", ghandler.GoodsRepayment)
-
+	srv.PUT("/goods-update-payment/:id", ghandler.GoodsRepayment)
 	srv.GET("/goods-repayment", ghandler.GetLoanGoodsByRepaymentStatus)
 	srv.GET("/goods-income-report", ghandler.generateIncomeReport)
 	return ghandler
